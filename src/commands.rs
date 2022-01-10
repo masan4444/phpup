@@ -1,3 +1,5 @@
+use crate::version::Version;
+use itertools::Itertools;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -10,6 +12,8 @@ pub struct Config {
     home_dir: PathBuf,
     versions_dir: PathBuf,
     local_versions: Vec<Version>,
+    multishell_path: Option<PathBuf>,
+    current_version: Option<Version>,
 }
 
 impl Config {
@@ -19,10 +23,26 @@ impl Config {
             .join(".phpup");
         let versions_dir = home_dir.join("versions").join("php");
         let local_versions = get_local_versions(&versions_dir);
+        let multishell_path = std::env::var("PHPUP_MULTISHELL_PATH")
+            .map(move |path| PathBuf::from(path))
+            .ok();
+        let current_version = multishell_path.as_ref().map(|path| {
+            path.read_link()
+                .unwrap()
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .parse()
+                .unwrap()
+        });
+
         Self {
             home_dir,
             versions_dir,
             local_versions,
+            multishell_path,
+            current_version,
         }
     }
 }
@@ -46,17 +66,16 @@ fn get_local_versions(versions_dir: impl AsRef<Path>) -> Vec<Version> {
         .collect()
 }
 
+mod current;
 mod init;
 mod install;
 mod list_local;
 mod list_remote;
 mod r#use;
 
+pub use current::Current;
 pub use init::Init;
 pub use install::Install;
-use itertools::Itertools;
 pub use list_local::ListLocal;
 pub use list_remote::ListRemote;
 pub use r#use::Use;
-
-use crate::version::Version;

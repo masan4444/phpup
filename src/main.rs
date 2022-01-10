@@ -10,6 +10,7 @@ fn main() {
         SubCommand::Install(cmd) => cmd.run(&config),
         SubCommand::List(cmd) => cmd.run(&config),
         SubCommand::Use(cmd) => cmd.run(&config),
+        SubCommand::Current(cmd) => cmd.run(&config),
     };
     if let Err(e) = result {
         eprintln!("{}", e);
@@ -40,4 +41,7 @@ pub enum SubCommand {
 
     #[structopt(name = "use")]
     Use(commands::Use),
+
+    #[structopt(name = "current")]
+    Current(commands::Current),
 }
