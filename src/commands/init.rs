@@ -10,6 +10,7 @@ impl Command for Init {
         let symlink = create_symlink(&config.versions_dir);
         println!("export PHPUP_MULTISHELL_PATH={:?}", symlink);
         println!("export PATH={:?}:$PATH", symlink.join("bin"));
+        println!("hash -r");
         Ok(())
     }
 }
