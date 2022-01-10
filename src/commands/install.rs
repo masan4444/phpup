@@ -1,4 +1,4 @@
-use super::Command;
+use super::{Command, Config};
 use crate::curl;
 use crate::release;
 use crate::version::Version;
@@ -16,15 +16,18 @@ pub struct Install {
 }
 
 impl Command for Install {
-    fn run(&self) -> anyhow::Result<()> {
-        let home_dir = dirs::home_dir()
-            .expect("Can't get home directory")
-            .join(".phpup");
-        let versions_dir = home_dir.join("versions").join("php");
+    fn run(&self, config: &Config) -> anyhow::Result<()> {
+        let versions_dir = &config.versions_dir;
+        let local_versions = &config.local_versions;
 
         match &self.version {
             Some(version) => {
                 let version = Version::from_str(version)?;
+                if local_versions.contains(&version) {
+                    println!("Already installed {}", version.to_string());
+                    return Ok(());
+                }
+
                 let release = release::fetch_latest(version)?;
                 let install_version = release.version.unwrap();
                 println!("Installing {}...", install_version);

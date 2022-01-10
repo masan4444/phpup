@@ -1,7 +1,5 @@
-use super::{
-    list_local::{ListBase, Printer},
-    Command,
-};
+use super::Config;
+use super::{list_local::Printer, Command};
 use crate::release;
 use crate::version::Version;
 use std::str::FromStr;
@@ -12,23 +10,17 @@ pub struct ListRemote {
     version: Option<String>,
 }
 
-impl ListBase for ListRemote {}
-
 impl Command for ListRemote {
-    fn run(&self) -> anyhow::Result<()> {
-        let home_dir = dirs::home_dir()
-            .expect("Can't get home directory")
-            .join(".phpup");
-        let versions_dir = home_dir.join("versions").join("php");
-        let local_versions = Self::get_local_versions(versions_dir);
+    fn run(&self, config: &Config) -> anyhow::Result<()> {
+        let local_versions = &config.local_versions;
         let mut printer = Printer::new(local_versions);
 
         match &self.version {
             Some(version) => {
                 let version = Version::from_str(version)?;
                 if version.patch_version().is_some() {
-                    let oldest_minor_release = release::fetch_oldest_patch(version)?;
-                    let support = oldest_minor_release.calculate_support();
+                    let oldest_patch_release = release::fetch_oldest_patch(version)?;
+                    let support = oldest_patch_release.calculate_support();
                     printer.print_version(version, Some(support));
                 } else {
                     printer.print_releases(&release::fetch_all(version)?);

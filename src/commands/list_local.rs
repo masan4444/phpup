@@ -1,10 +1,7 @@
-use super::Command;
+use super::{Command, Config};
 use crate::release::{Release, Support};
 use crate::version::Version;
-use itertools::Itertools;
 use std::collections::BTreeMap;
-use std::fs;
-use std::path::Path;
 use std::str::FromStr;
 use structopt::StructOpt;
 
@@ -13,17 +10,11 @@ pub struct ListLocal {
     version: Option<String>,
 }
 
-impl ListBase for ListLocal {}
-
 impl Command for ListLocal {
-    fn run(&self) -> anyhow::Result<()> {
-        let home_dir = dirs::home_dir()
-            .expect("Can't get home directory")
-            .join(".phpup");
-        let versions_dir = home_dir.join("versions").join("php");
-
-        let local_versions = Self::get_local_versions(versions_dir);
-        let printer = Printer::new(vec![]);
+    fn run(&self, config: &Config) -> anyhow::Result<()> {
+        let local_versions = &config.local_versions;
+        let empty = vec![];
+        let printer = Printer::new(&empty);
 
         match &self.version {
             Some(version) => {
@@ -42,34 +33,14 @@ impl Command for ListLocal {
     }
 }
 
-pub trait ListBase {
-    fn get_local_versions(versions_dir: impl AsRef<Path>) -> Vec<Version> {
-        fs::read_dir(&versions_dir)
-            .unwrap()
-            .flat_map(|entry| entry.ok())
-            .flat_map(|path| path.path().file_name().map(ToOwned::to_owned))
-            .flat_map(|dir_os_str| dir_os_str.into_string())
-            .flat_map(|dir_str| Version::from_str(&dir_str).ok())
-            .filter(|version| {
-                versions_dir
-                    .as_ref()
-                    .join(version.to_string())
-                    .join("bin")
-                    .join("php")
-                    .is_file()
-            })
-            .sorted()
-            .collect()
-    }
-}
-
-pub struct Printer {
-    local_versions: Vec<Version>,
+// TODO: refactor
+pub struct Printer<'a> {
+    local_versions: &'a Vec<Version>,
     supports: BTreeMap<Version, Support>,
 }
 
-impl Printer {
-    pub fn new(local_versions: Vec<Version>) -> Self {
+impl<'a> Printer<'a> {
+    pub fn new(local_versions: &'a Vec<Version>) -> Self {
         Self {
             local_versions,
             supports: BTreeMap::new(),

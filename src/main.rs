@@ -1,14 +1,15 @@
-use phpup::commands::{self, Command};
+use phpup::commands::{self, Command, Config};
 use structopt::StructOpt;
 
 fn main() {
     let Cli { subcmd } = Cli::from_args();
+    let config = Config::new();
     let result = match subcmd {
-        SubCommand::Init(cmd) => cmd.run(),
-        SubCommand::ListRemote(cmd) => cmd.run(),
-        SubCommand::Install(cmd) => cmd.run(),
-        SubCommand::List(cmd) => cmd.run(),
-        SubCommand::Use(cmd) => cmd.run(),
+        SubCommand::Init(cmd) => cmd.run(&config),
+        SubCommand::ListRemote(cmd) => cmd.run(&config),
+        SubCommand::Install(cmd) => cmd.run(&config),
+        SubCommand::List(cmd) => cmd.run(&config),
+        SubCommand::Use(cmd) => cmd.run(&config),
     };
     if let Err(e) = result {
         eprintln!("{}", e);
