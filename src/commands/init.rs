@@ -1,13 +1,9 @@
 use super::{Command, Config};
-use crate::version::Version;
 use std::path::Path;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-pub struct Init {
-    #[structopt(long = "default")]
-    version: Option<Version>,
-}
+pub struct Init {}
 
 impl Command for Init {
     fn run(&self, config: &Config) -> anyhow::Result<()> {
