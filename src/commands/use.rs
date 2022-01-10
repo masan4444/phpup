@@ -2,10 +2,17 @@ use super::{Command, Config};
 use crate::symlink;
 use crate::version::Version;
 use structopt::StructOpt;
+use thiserror::Error;
 
 #[derive(StructOpt, Debug)]
 pub struct Use {
     version: Option<Version>,
+}
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("please run `phpup install {0}`")]
+    NotInstalled(Version),
 }
 
 impl Command for Use {
@@ -15,17 +22,19 @@ impl Command for Use {
 
         match &self.version {
             Some(version) => {
-                if local_versions.contains(&version) {
-                    let multishell_path = config.multishell_path.as_ref().unwrap();
-                    if multishell_path.exists() {
-                        symlink::remove(multishell_path).expect("Can't remove symlink!");
-                    }
-                    let new_original = versions_dir.join(version.to_string());
-                    symlink::link(new_original, multishell_path).expect("Can't create symlink!");
-                } else {
-                    println!("please install");
-                    todo!()
+                let version = local_versions
+                    .iter()
+                    .filter(|local_version| version.contains(local_version))
+                    .max()
+                    .ok_or(Error::NotInstalled(*version))?;
+
+                let multishell_path = config.multishell_path.as_ref().unwrap();
+                if multishell_path.exists() {
+                    symlink::remove(multishell_path).expect("Can't remove symlink!");
                 }
+                let new_original = versions_dir.join(version.to_string());
+                symlink::link(new_original, multishell_path).expect("Can't create symlink!");
+                println!("Using {}", version.to_string());
             }
             None => todo!(),
         }
