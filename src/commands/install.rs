@@ -6,13 +6,12 @@ use flate2::read::GzDecoder;
 use std::fs;
 use std::path::Path;
 use std::process;
-use std::str::FromStr;
 use structopt::StructOpt;
 use tar::Archive;
 
 #[derive(StructOpt, Debug)]
 pub struct Install {
-    version: Option<String>,
+    version: Option<Version>,
 }
 
 impl Command for Install {
@@ -22,13 +21,12 @@ impl Command for Install {
 
         match &self.version {
             Some(version) => {
-                let version = Version::from_str(version)?;
                 if local_versions.contains(&version) {
                     println!("Already installed {}", version.to_string());
                     return Ok(());
                 }
 
-                let release = release::fetch_latest(version)?;
+                let release = release::fetch_latest(*version)?;
                 let install_version = release.version.unwrap();
                 println!("Installing {}...", install_version);
                 let url = release.source_url();

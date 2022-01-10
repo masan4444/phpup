@@ -2,12 +2,11 @@ use super::{Command, Config};
 use crate::release::{Release, Support};
 use crate::version::Version;
 use std::collections::BTreeMap;
-use std::str::FromStr;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 pub struct ListLocal {
-    version: Option<String>,
+    version: Option<Version>,
 }
 
 impl Command for ListLocal {
@@ -17,13 +16,10 @@ impl Command for ListLocal {
         let printer = Printer::new(&empty, config.current_version);
 
         match &self.version {
-            Some(version) => {
-                let version = Version::from_str(version)?;
-                local_versions
-                    .iter()
-                    .filter(|local_version| version.contains(local_version))
-                    .for_each(|&local_version| printer.print_version(local_version, None))
-            }
+            Some(version) => local_versions
+                .iter()
+                .filter(|local_version| version.contains(local_version))
+                .for_each(|&local_version| printer.print_version(local_version, None)),
             None => local_versions
                 .iter()
                 .for_each(|&local_version| printer.print_version(local_version, None)),

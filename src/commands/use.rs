@@ -1,12 +1,11 @@
 use super::{Command, Config};
 use crate::symlink;
 use crate::version::Version;
-use std::str::FromStr;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 pub struct Use {
-    version: Option<String>,
+    version: Option<Version>,
 }
 
 impl Command for Use {
@@ -16,7 +15,6 @@ impl Command for Use {
 
         match &self.version {
             Some(version) => {
-                let version = Version::from_str(version)?;
                 if local_versions.contains(&version) {
                     let multishell_path = config.multishell_path.as_ref().unwrap();
                     if multishell_path.exists() {

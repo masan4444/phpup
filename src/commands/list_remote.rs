@@ -2,12 +2,11 @@ use super::Config;
 use super::{list_local::Printer, Command};
 use crate::release;
 use crate::version::Version;
-use std::str::FromStr;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 pub struct ListRemote {
-    version: Option<String>,
+    version: Option<Version>,
 }
 
 impl Command for ListRemote {
@@ -17,13 +16,12 @@ impl Command for ListRemote {
 
         match &self.version {
             Some(version) => {
-                let version = Version::from_str(version)?;
                 if version.patch_version().is_some() {
-                    let oldest_patch_release = release::fetch_oldest_patch(version)?;
+                    let oldest_patch_release = release::fetch_oldest_patch(*version)?;
                     let support = oldest_patch_release.calculate_support();
-                    printer.print_version(version, Some(support));
+                    printer.print_version(*version, Some(support));
                 } else {
-                    printer.print_releases(&release::fetch_all(version)?);
+                    printer.print_releases(&release::fetch_all(*version)?);
                 }
             }
             None => {
