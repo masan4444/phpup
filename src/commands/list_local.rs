@@ -14,7 +14,7 @@ impl Command for ListLocal {
     fn run(&self, config: &Config) -> anyhow::Result<()> {
         let local_versions = &config.local_versions;
         let empty = vec![];
-        let printer = Printer::new(&empty);
+        let printer = Printer::new(&empty, config.current_version);
 
         match &self.version {
             Some(version) => {
@@ -37,20 +37,31 @@ impl Command for ListLocal {
 pub struct Printer<'a> {
     local_versions: &'a Vec<Version>,
     supports: BTreeMap<Version, Support>,
+    current_version: Option<Version>,
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(local_versions: &'a Vec<Version>) -> Self {
+    pub fn new(local_versions: &'a Vec<Version>, current_version: Option<Version>) -> Self {
         Self {
             local_versions,
             supports: BTreeMap::new(),
+            current_version,
         }
     }
     pub fn print_version(&self, version: Version, support: Option<Support>) {
         let installed = self.local_versions.contains(&version);
+        let used = self.current_version == Some(version);
         println!(
             "{:<3}{:<7}   {}",
-            if installed { "*" } else { "" },
+            if used {
+                "->"
+            } else {
+                if installed {
+                    "*"
+                } else {
+                    ""
+                }
+            },
             version.to_string(),
             support.map_or("".to_owned(), |s| format!("({})", s.to_string())),
         );
