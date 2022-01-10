@@ -26,16 +26,20 @@ impl Config {
         let multishell_path = std::env::var("PHPUP_MULTISHELL_PATH")
             .map(move |path| PathBuf::from(path))
             .ok();
-        let current_version = multishell_path.as_ref().map(|path| {
-            path.read_link()
-                .unwrap()
-                .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .parse()
-                .unwrap()
-        });
+        let current_version = multishell_path
+            .as_ref()
+            .map(|symlink| {
+                symlink.read_link().ok().map(|version_dir_path| {
+                    version_dir_path
+                        .file_name()
+                        .unwrap()
+                        .to_str()
+                        .unwrap()
+                        .parse()
+                        .unwrap()
+                })
+            })
+            .flatten();
 
         Self {
             home_dir,

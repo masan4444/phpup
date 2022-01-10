@@ -19,7 +19,9 @@ impl Command for Use {
                 let version = Version::from_str(version)?;
                 if local_versions.contains(&version) {
                     let multishell_path = config.multishell_path.as_ref().unwrap();
-                    symlink::remove(multishell_path).expect("Can't remove symlink!");
+                    if multishell_path.exists() {
+                        symlink::remove(multishell_path).expect("Can't remove symlink!");
+                    }
                     let new_original = versions_dir.join(version.to_string());
                     symlink::link(new_original, multishell_path).expect("Can't create symlink!");
                 } else {

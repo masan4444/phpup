@@ -25,8 +25,9 @@ fn create_symlink(versions_dir: impl AsRef<Path>) -> std::path::PathBuf {
         }
     };
 
-    symlink::link(versions_dir.as_ref().join("8.1.1"), &symlink_path)
-        .expect("Can't create symlink!");
+    // TODO: default version
+    // symlink::link(versions_dir.as_ref().join("8.1.1"), &symlink_path)
+    //     .expect("Can't create symlink!");
     symlink_path
 }
 
