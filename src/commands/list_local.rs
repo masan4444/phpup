@@ -10,7 +10,7 @@ pub struct ListLocal {
 impl Command for ListLocal {
     fn run(&self, config: &Config) -> anyhow::Result<()> {
         let local_versions = config.local_versions();
-        let printer = Printer::new(&[], config.current_version());
+        let printer = Printer::new(&local_versions, config.current_version());
 
         match &self.version {
             Some(version) => local_versions
@@ -43,17 +43,10 @@ impl<'a> Printer<'a> {
         let installed = self.local_versions.contains(&version);
         let used = self.current_version == Some(version);
         println!(
-            "{:<3}{:<7}",
-            if used {
-                "->"
-            } else {
-                if installed {
-                    "*"
-                } else {
-                    ""
-                }
-            },
+            "{:<2}{:<8}{}",
+            if installed { "*" } else { "" },
             version.to_string(),
+            if used { "<-" } else { "" },
         );
     }
     pub fn print_versions(&self, releaes: impl Iterator<Item = &'a Version>) {
