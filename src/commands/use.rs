@@ -1,6 +1,7 @@
 use super::{Command, Config};
 use crate::symlink;
 use crate::version::Version;
+use colored::Colorize;
 use structopt::StructOpt;
 use thiserror::Error;
 
@@ -11,8 +12,8 @@ pub struct Use {
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("please run `phpup install {0}`")]
-    NotInstalled(Version),
+    #[error("Need to run `phpup install {0}`")]
+    NotInstalledError(Version),
 }
 
 impl Command for Use {
@@ -26,7 +27,7 @@ impl Command for Use {
                     .iter()
                     .filter(|local_version| version.contains(local_version))
                     .max()
-                    .ok_or(Error::NotInstalled(*version))?;
+                    .ok_or(Error::NotInstalledError(*version))?;
 
                 let multishell_path = config.multishell_path.as_ref().unwrap();
                 let is_first_using = if multishell_path.exists() {
@@ -39,7 +40,10 @@ impl Command for Use {
                 symlink::link(new_original, multishell_path).expect("Can't create symlink!");
                 println!("Using {}", version.to_string());
                 if is_first_using {
-                    println!("Please run `rehash` in your shell");
+                    println!(
+                        "{}: Need to run `rehash` in this shell",
+                        "warning".yellow().bold()
+                    );
                 }
             }
             None => todo!(),
