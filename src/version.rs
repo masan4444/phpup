@@ -192,7 +192,7 @@ impl<'de> de::Visitor<'de> for VersionVisitor {
     where
         E: de::Error,
     {
-        Version::from_str(v).map_err(de::Error::custom)
+        v.parse().map_err(de::Error::custom)
     }
 }
 

@@ -2,7 +2,6 @@ use crate::version::Version;
 use itertools::Itertools;
 use std::fs;
 use std::path::PathBuf;
-use std::str::FromStr;
 
 pub trait Command {
     fn run(&self, config: &Config) -> anyhow::Result<()>;
@@ -56,7 +55,7 @@ impl Config {
             .flat_map(|entry| entry.ok())
             .flat_map(|path| path.path().file_name().map(ToOwned::to_owned))
             .flat_map(|dir_os_str| dir_os_str.into_string())
-            .flat_map(|dir_str| Version::from_str(&dir_str).ok())
+            .flat_map(|dir_str| dir_str.parse::<Version>().ok())
             .filter(|version| {
                 versions_dir
                     .join(version.to_string())
