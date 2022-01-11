@@ -1,7 +1,7 @@
 use crate::version::Version;
 use itertools::Itertools;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 pub trait Command {
     fn run(&self, config: &Config) -> anyhow::Result<()>;
@@ -71,7 +71,7 @@ impl Config {
     }
 
     #[cfg(test)]
-    pub fn with_base_dir(mut self, base_dir: impl AsRef<Path>) -> Self {
+    pub fn with_base_dir(mut self, base_dir: impl AsRef<std::path::Path>) -> Self {
         self.base_dir.clear();
         self.base_dir.push(base_dir);
         self

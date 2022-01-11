@@ -55,7 +55,8 @@ impl Command for Install {
                     .unwrap()
                     .path();
                 println!("Buiding...");
-                Self::build(source_dir, install_dir).unwrap();
+                Self::build(&source_dir, &install_dir).unwrap();
+                println!("Successfully installed to {:?}", install_dir);
             }
             None => {}
         };
