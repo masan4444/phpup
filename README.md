@@ -5,8 +5,8 @@ fast and simple PHP version manager written in rust
 ## Features
 
 - No requirements for system PHP installation
-- Cross-platform support (macOS, Linux)
-- Automatically version switching with `.php-version`
+- [WIP] Cross-platform support (macOS, Linux)
+- [WIP] Automatically version switching with `.php-version`
 
 ## Installation
 
@@ -22,7 +22,7 @@ eval $(phpup init)
 
 ## Contribution
 
-## Goals
+- [TODO.md](TODO.md)
 
 ## Reference
 
