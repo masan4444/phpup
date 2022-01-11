@@ -1,14 +1,14 @@
 use super::{Command, Config};
 // use crate::symlink;
-use std::path::Path;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 pub struct Init {}
 
 impl Command for Init {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
-        let symlink = create_symlink(config.versions_dir());
+    fn run(&self, _config: &Config) -> anyhow::Result<()> {
+        let symlink = create_symlink();
         println!("export PHPUP_MULTISHELL_PATH={:?}", symlink);
         println!("export PATH={:?}:$PATH", symlink.join("bin"));
         println!("rehash");
@@ -16,27 +16,25 @@ impl Command for Init {
     }
 }
 
-fn create_symlink(versions_dir: impl AsRef<Path>) -> std::path::PathBuf {
-    let system_temp_dir = std::env::temp_dir().join("phpup");
-    std::fs::create_dir_all(&system_temp_dir).expect("Can't create tempdir!");
+fn create_symlink() -> std::path::PathBuf {
+    let temp_dir = std::env::temp_dir().join("phpup");
+    std::fs::create_dir_all(&temp_dir).expect("Can't create tempdir!");
     let symlink_path = loop {
-        let symlink_path = generate_symlink_path(&system_temp_dir);
+        let symlink_path = temp_dir.join(generate_symlink_path());
         if !symlink_path.exists() {
             break symlink_path;
         }
     };
 
     // TODO: default version
-    // TODO: windows
     // symlink::link(&default_version_dir, &symlink_path).expect("Can't create symlink!");
     symlink_path
 }
 
-fn generate_symlink_path(root: &std::path::Path) -> std::path::PathBuf {
-    let temp_dir_name = format!(
-        "phpup_{}_{}",
+fn generate_symlink_path() -> PathBuf {
+    PathBuf::from(format!(
+        "{}_{}",
         std::process::id(),
         chrono::Utc::now().timestamp_millis(),
-    );
-    root.join(temp_dir_name)
+    ))
 }
