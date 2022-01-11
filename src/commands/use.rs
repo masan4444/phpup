@@ -25,7 +25,7 @@ impl Command for Use {
             Some(version) => {
                 let version = local_versions
                     .iter()
-                    .filter(|local_version| version.contains(local_version))
+                    .filter(|local_version| version.includes(local_version))
                     .max()
                     .ok_or(Error::NotInstalledError(*version))?;
 

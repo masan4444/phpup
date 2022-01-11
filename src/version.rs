@@ -78,7 +78,7 @@ impl Version {
             minor: None,
         }
     }
-    pub fn contains(&self, other: &Self) -> bool {
+    pub fn includes(&self, other: &Self) -> bool {
         self.major_version() == other.major_version()
             && self.minor.map_or(true, |Minor { version, patch }| {
                 Some(version) == other.minor_version()
@@ -254,14 +254,14 @@ mod tests {
         let version3_1 = Version::from_numbers(3, Some(1), None);
         let version3 = Version::from_numbers(3, None, None);
 
-        assert_eq!(version3.contains(&version3), true);
-        assert_eq!(version3.contains(&version3_1), true);
-        assert_eq!(version3.contains(&version3_1_4), true);
-        assert_eq!(version3_1.contains(&version3), false);
-        assert_eq!(version3_1.contains(&version3_1), true);
-        assert_eq!(version3_1.contains(&version3_1_4), true);
-        assert_eq!(version3_1_4.contains(&version3), false);
-        assert_eq!(version3_1_4.contains(&version3_1), false);
-        assert_eq!(version3_1_4.contains(&version3_1_4), true);
+        assert_eq!(version3.includes(&version3), true);
+        assert_eq!(version3.includes(&version3_1), true);
+        assert_eq!(version3.includes(&version3_1_4), true);
+        assert_eq!(version3_1.includes(&version3), false);
+        assert_eq!(version3_1.includes(&version3_1), true);
+        assert_eq!(version3_1.includes(&version3_1_4), true);
+        assert_eq!(version3_1_4.includes(&version3), false);
+        assert_eq!(version3_1_4.includes(&version3_1), false);
+        assert_eq!(version3_1_4.includes(&version3_1_4), true);
     }
 }

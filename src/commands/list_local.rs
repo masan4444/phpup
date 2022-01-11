@@ -15,7 +15,7 @@ impl Command for ListLocal {
         match &self.version {
             Some(version) => local_versions
                 .iter()
-                .filter(|local_version| version.contains(local_version))
+                .filter(|local_version| version.includes(local_version))
                 .for_each(|&local_version| printer.print_version(local_version)),
             None => local_versions
                 .iter()

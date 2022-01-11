@@ -22,11 +22,15 @@ impl Command for Install {
 
         match &self.version {
             Some(version) => {
-                if local_versions.contains(&version) {
+                let installed_version = local_versions
+                    .iter()
+                    .filter(|local_version| version.includes(local_version))
+                    .max();
+                if let Some(installed_version) = installed_version {
                     println!(
                         "{}: Already installed {}",
                         "warning".yellow().bold(),
-                        version.to_string()
+                        installed_version.to_string()
                     );
                     return Ok(());
                 }
