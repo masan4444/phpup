@@ -9,8 +9,8 @@ pub struct ListLocal {
 
 impl Command for ListLocal {
     fn run(&self, config: &Config) -> anyhow::Result<()> {
-        let local_versions = &config.local_versions;
-        let printer = Printer::new(&[], config.current_version);
+        let local_versions = config.local_versions();
+        let printer = Printer::new(&[], config.current_version());
 
         match &self.version {
             Some(version) => local_versions

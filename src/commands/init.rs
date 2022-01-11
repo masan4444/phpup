@@ -1,5 +1,5 @@
 use super::{Command, Config};
-use crate::symlink;
+// use crate::symlink;
 use std::path::Path;
 use structopt::StructOpt;
 
@@ -8,7 +8,7 @@ pub struct Init {}
 
 impl Command for Init {
     fn run(&self, config: &Config) -> anyhow::Result<()> {
-        let symlink = create_symlink(&config.versions_dir);
+        let symlink = create_symlink(config.versions_dir());
         println!("export PHPUP_MULTISHELL_PATH={:?}", symlink);
         println!("export PATH={:?}:$PATH", symlink.join("bin"));
         println!("rehash");

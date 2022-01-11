@@ -3,7 +3,7 @@ use structopt::StructOpt;
 
 fn main() {
     let Cli { subcmd } = Cli::from_args();
-    let config = Config::new();
+    let config = Config::default();
     let result = match subcmd {
         SubCommand::Init(cmd) => cmd.run(&config),
         SubCommand::ListRemote(cmd) => cmd.run(&config),

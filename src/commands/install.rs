@@ -16,8 +16,8 @@ pub struct Install {
 
 impl Command for Install {
     fn run(&self, config: &Config) -> anyhow::Result<()> {
-        let versions_dir = &config.versions_dir;
-        let local_versions = &config.local_versions;
+        let versions_dir = config.versions_dir();
+        let local_versions = config.local_versions();
 
         match &self.version {
             Some(version) => {

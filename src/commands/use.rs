@@ -17,8 +17,8 @@ pub enum Error {
 
 impl Command for Use {
     fn run(&self, config: &Config) -> anyhow::Result<()> {
-        let versions_dir = &config.versions_dir;
-        let local_versions = &config.local_versions;
+        let versions_dir = config.versions_dir();
+        let local_versions = config.local_versions();
 
         match &self.version {
             Some(version) => {
