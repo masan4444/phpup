@@ -12,6 +12,7 @@ fn main() {
         SubCommand::List(cmd) => cmd.run(&config),
         SubCommand::Use(cmd) => cmd.run(&config),
         SubCommand::Current(cmd) => cmd.run(&config),
+        SubCommand::Uninstall(cmd) => cmd.run(&config),
     };
     if let Err(e) = result {
         eprintln!("{}: {}", "error".red().bold(), e);
@@ -45,4 +46,7 @@ pub enum SubCommand {
 
     #[structopt(name = "current")]
     Current(commands::Current),
+
+    #[structopt(name = "uninstall")]
+    Uninstall(commands::Uninstall),
 }
