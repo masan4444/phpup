@@ -37,19 +37,16 @@ impl Config {
     pub fn current_version(&self) -> Option<Version> {
         self.multishell_path
             .as_ref()
-            .map(|symlink| {
-                symlink.read_link().ok().map(|version_dir_path| {
-                    version_dir_path
-                        .file_name()
-                        .unwrap()
-                        .to_str()
-                        .unwrap()
-                        .parse()
-                        .ok()
-                })
+            .and_then(|symlink| symlink.read_link().ok())
+            .and_then(|version_dir_path| {
+                version_dir_path
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .parse()
+                    .ok()
             })
-            .flatten()
-            .flatten()
     }
     pub fn local_versions(&self) -> Vec<Version> {
         let versions_dir = self.versions_dir();

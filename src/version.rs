@@ -92,10 +92,10 @@ impl Version {
         self.minor
     }
     fn patch(self) -> Option<Patch> {
-        self.minor().map(|minor| minor.patch).flatten()
+        self.minor().and_then(|minor| minor.patch)
     }
     fn pre(self) -> Option<Pre> {
-        self.patch().map(|patch| patch.pre).flatten()
+        self.patch().and_then(|patch| patch.pre)
     }
     pub fn major_version(self) -> usize {
         self.version
