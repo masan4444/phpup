@@ -46,7 +46,9 @@ impl Command for Install {
                 //                install_dir              |        |
                 //                              download_dir        |
                 //                                         source_dir
+                //
                 // .phpup/versions/php/3.1.4/{bin,include,lib,php,var}
+
                 let install_dir = versions_dir.join(install_version.to_string());
                 fs::create_dir_all(&install_dir).unwrap();
                 let download_dir = tempfile::Builder::new()
