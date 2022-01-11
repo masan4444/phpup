@@ -1,3 +1,4 @@
+use colored::Colorize;
 use phpup::commands::{self, Command, Config};
 use structopt::StructOpt;
 
@@ -13,7 +14,7 @@ fn main() {
         SubCommand::Current(cmd) => cmd.run(&config),
     };
     if let Err(e) = result {
-        eprintln!("{}", e);
+        eprintln!("{}: {}", "error".red().bold(), e);
         std::process::exit(1);
     }
 }

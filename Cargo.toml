@@ -23,6 +23,7 @@ tar = "0.4.38"
 dirs = "1.0.4"
 tempfile = "3"
 num_cpus = "1.13.1"
+colored = "1.6.1"
 
 octocrab = "0.15.3"
 # async-trait = "0.1.52"

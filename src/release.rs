@@ -9,10 +9,12 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("can't parse json: {0}")]
+    #[error("Can't parse json: {0}")]
     JsonParseError(#[from] serde_json::error::Error),
-    #[error("{0}")]
-    ReceiveErrMsg(String),
+    #[error("Can't find releases that matches {0}")]
+    NotFoundReleaseError(Version),
+    #[error("Receive error message from release site: {0}")]
+    OtherFetchError(String),
 }
 
 fn fetch_and_parse(
@@ -34,11 +36,13 @@ fn fetch_and_parse(
     match resp {
         Response::Map(releases) => Ok(releases),
         Response::One(release) => Ok([(release.version.unwrap(), release)].into_iter().collect()),
-        Response::Error { msg } => Err(Error::ReceiveErrMsg(format!(
-            "{}{}",
-            msg,
-            version.map_or("".to_owned(), |v| format!(": \"{}\"", v))
-        ))),
+        Response::Error { msg } => {
+            if msg.starts_with("Unknown version") {
+                Err(Error::NotFoundReleaseError(version.unwrap()))
+            } else {
+                Err(Error::OtherFetchError(msg.to_owned()))
+            }
+        }
     }
 }
 

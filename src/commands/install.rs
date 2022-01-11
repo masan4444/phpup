@@ -2,6 +2,7 @@ use super::{Command, Config};
 use crate::curl;
 use crate::release;
 use crate::version::Version;
+use colored::Colorize;
 use flate2::read::GzDecoder;
 use std::fs;
 use std::path::Path;
@@ -22,7 +23,11 @@ impl Command for Install {
         match &self.version {
             Some(version) => {
                 if local_versions.contains(&version) {
-                    println!("Already installed {}", version.to_string());
+                    println!(
+                        "{}: Already installed {}",
+                        "warning".yellow().bold(),
+                        version.to_string()
+                    );
                     return Ok(());
                 }
 
