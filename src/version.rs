@@ -223,8 +223,8 @@ mod tests {
     use std::collections::HashMap;
 
     #[test]
-    fn str() {
-        let version3_1_4: Result<Version, _> = Version::from_str("3.1.4");
+    fn parsed_from_str() {
+        let version3_1_4: Result<Version, _> = "3.1.4".parse();
         assert!(matches!(version3_1_4, Ok(_)));
         assert_eq!(
             version3_1_4.unwrap(),
@@ -233,7 +233,7 @@ mod tests {
     }
 
     #[test]
-    fn json() {
+    fn deserialize_from_json() {
         let json = r#"
             { "3.1.4": ["abc", "cdf"] }
         "#;
@@ -249,7 +249,7 @@ mod tests {
     }
 
     #[test]
-    fn contains() {
+    fn includes_test() {
         let version3_1_4 = Version::from_numbers(3, Some(1), Some(4));
         let version3_1 = Version::from_numbers(3, Some(1), None);
         let version3 = Version::from_numbers(3, None, None);
