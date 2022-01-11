@@ -9,7 +9,7 @@ impl Command for Current {
         if let Some(version) = config.current_version() {
             println!("{}", version.to_string());
         } else {
-            eprintln!("{{N/A}}");
+            println!("none");
         }
         Ok(())
     }
