@@ -40,6 +40,13 @@ impl Command for Install {
                 println!("Installing {}...", install_version);
                 let url = release.source_url();
 
+                // .phpup/versions/php/3.1.4/.downloads-aaa/php-3.1.4
+                //                    |     |              |        |
+                //         versions_dir     |              |        |
+                //                install_dir              |        |
+                //                              download_dir        |
+                //                                         source_dir
+                // .phpup/versions/php/3.1.4/{bin,include,lib,php,var}
                 let install_dir = versions_dir.join(install_version.to_string());
                 fs::create_dir_all(&install_dir).unwrap();
                 let download_dir = tempfile::Builder::new()
