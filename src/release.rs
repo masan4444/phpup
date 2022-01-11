@@ -211,80 +211,126 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test() {
-        use chrono::NaiveDate;
-        let file = Source::File {
-            filename: "ffff".to_owned(),
-            name: "nn".to_owned(),
-            checksum: Some(Hash::SHA256("33333333".to_owned())),
-            date: None,
-        };
-        let announcement = Announcement::English(English {
-            english: "aaaa".to_owned(),
+    fn deserialize() {
+        let json = r#"
+            {
+                "8.1.1": {
+                    "announcement": true,
+                    "tags": [],
+                    "date": "16 Dec 2021",
+                    "source": [
+                        {
+                            "filename": "php-8.1.1.tar.gz",
+                            "name": "PHP 8.1.1 (tar.gz)",
+                            "sha256": "4e4cf3f843a5111f6c55cd21de8f26834ea3cd4a5be77c88357cbcec4a2d671d",
+                            "date": "16 Dec 2021"
+                        },
+                        {
+                            "filename": "php-8.1.1.tar.bz2",
+                            "name": "PHP 8.1.1 (tar.bz2)",
+                            "sha256": "8f8bc9cad6cd124edc111f7db0a109745e2f638770a101b3c22a2953f7a9b40e",
+                            "date": "16 Dec 2021"
+                        },
+                        {
+                            "filename": "php-8.1.1.tar.xz",
+                            "name": "PHP 8.1.1 (tar.xz)",
+                            "sha256": "33c09d76d0a8bbb5dd930d9dd32e6bfd44e9efcf867563759eb5492c3aff8856",
+                            "date": "16 Dec 2021"
+                        }
+                    ]
+                },
+                "8.0.14": {
+                    "announcement": true,
+                    "tags": [],
+                    "date": "16 Dec 2021",
+                    "source": [
+                        {
+                            "filename": "php-8.0.14.tar.gz",
+                            "name": "PHP 8.0.14 (tar.gz)",
+                            "sha256": "e67ebd8c4c77247ad1fa88829e5b95d51a19edf3d87814434de261e20a63ea20",
+                            "date": "16 Dec 2021"
+                        },
+                        {
+                            "filename": "php-8.0.14.tar.bz2",
+                            "name": "PHP 8.0.14 (tar.bz2)",
+                            "sha256": "bb381fdf4817ad7c24c23ea7f77cad68dceb86eb3ac1a37acedadf8ad0a0cd4b",
+                            "date": "16 Dec 2021"
+                        },
+                        {
+                            "filename": "php-8.0.14.tar.xz",
+                            "name": "PHP 8.0.14 (tar.xz)",
+                            "sha256": "fbde8247ac200e4de73449d9fefc8b495d323b5be9c10cdb645fb431c91156e3",
+                        "date": "16 Dec 2021"
+                        }
+                    ]
+                }
+            }
+        "#;
+        let resp: Result<Response, _> = serde_json::from_str(&json);
+        assert!(resp.is_ok());
+        let resp = resp.unwrap();
+        assert!(if let Response::Map(map) = resp {
+            map.contains_key(&"8.1.1".parse().unwrap())
+        } else {
+            false
         });
-        let announcement2 = Announcement::Flag(true);
-        let release = Release {
-            announcement: Some(announcement2),
-            tags: Some(vec![Tag::Security]),
-            source: vec![],
-            windows_binary: None,
-            date: NaiveDate::from_ymd(2021, 9, 3),
-            museum: None,
-            version: None,
-        };
-        println!("{:#?}", serde_json::to_string(&file).unwrap());
-
-        let json = serde_json::to_string(&release).unwrap();
-        println!("{:#?}", json);
-
-        let json = r#"{
-
-          }"#;
-
-        let release: Release = serde_json::from_str(&json).unwrap();
-        println!("{:#?}", release);
-
-        // let base_url = "https://www.php.net/releases/index.php";
-        // let query = format!("?json=1&version=1",);
-        // let url = &format!("{}{}", base_url, query);
-        // // println!("{}", url);
-        // let output = curl::get_as_slice(url);
-        // let resp: Result<Response, _> = serde_json::from_slice(&output);
-        // println!("{:?}", resp);
+    }
+    #[test]
+    fn fetch_all_major_test() {
+        let releases = fetch_all("3".parse().unwrap());
+        assert!(releases.is_ok());
+        assert!(!releases.unwrap().is_empty());
+        let releases = fetch_all("5".parse().unwrap());
+        assert!(releases.is_ok());
+        assert!(!releases.unwrap().is_empty());
+        let releases = fetch_all("8".parse().unwrap());
+        assert!(releases.is_ok());
+        assert!(!releases.unwrap().is_empty());
+    }
+    #[test]
+    fn fetch_latest_test() {
+        let latest_release = fetch_latest("7.0".parse().unwrap());
+        assert!(latest_release.is_ok());
+        assert_eq!(
+            latest_release.unwrap().version.unwrap(),
+            "7.0.33".parse().unwrap()
+        );
     }
 }
 
-use octocrab;
-#[allow(unused)]
-async fn fetch_versions_from_github() {
-    let instance = octocrab::instance();
+mod github {
+    use octocrab;
+    #[allow(unused)]
+    async fn fetch_versions_from_github() {
+        let instance = octocrab::instance();
 
-    let page = instance
-        .repos("php", "php-src")
-        .list_tags()
-        .per_page(100u8)
-        .send()
-        .await
-        .unwrap();
-    println!("number of pages: {}", page.number_of_pages().unwrap());
+        let page = instance
+            .repos("php", "php-src")
+            .list_tags()
+            .per_page(100u8)
+            .send()
+            .await
+            .unwrap();
+        println!("number of pages: {}", page.number_of_pages().unwrap());
 
-    let tags = instance
-        .all_pages::<octocrab::models::repos::Tag>(page)
-        .await
-        .unwrap();
-    println!("number of tags: {}", tags.len());
+        let tags = instance
+            .all_pages::<octocrab::models::repos::Tag>(page)
+            .await
+            .unwrap();
+        println!("number of tags: {}", tags.len());
 
-    let tag_names = tags
-        .iter()
-        .map(|tag| tag.name.clone())
-        .collect::<Vec<String>>();
+        let tag_names = tags
+            .iter()
+            .map(|tag| tag.name.clone())
+            .collect::<Vec<String>>();
 
-    for tag_name in &tag_names {
-        println!("{}", tag_name)
+        for tag_name in &tag_names {
+            println!("{}", tag_name)
+        }
+
+        //     use tokio::runtime::Runtime;
+        //     Runtime::new()
+        //         .unwrap()
+        //         .block_on(fetch_versions_from_github());
     }
-
-    //     use tokio::runtime::Runtime;
-    //     Runtime::new()
-    //         .unwrap()
-    //         .block_on(fetch_versions_from_github());
 }
