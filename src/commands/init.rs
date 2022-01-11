@@ -17,7 +17,8 @@ impl Command for Init {
 }
 
 fn create_symlink(versions_dir: impl AsRef<Path>) -> std::path::PathBuf {
-    let system_temp_dir = std::env::temp_dir();
+    let system_temp_dir = std::env::temp_dir().join("phpup");
+    std::fs::create_dir_all(&system_temp_dir).expect("Can't create tempdir!");
     let symlink_path = loop {
         let symlink_path = generate_symlink_path(&system_temp_dir);
         if !symlink_path.exists() {

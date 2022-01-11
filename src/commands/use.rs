@@ -29,12 +29,18 @@ impl Command for Use {
                     .ok_or(Error::NotInstalled(*version))?;
 
                 let multishell_path = config.multishell_path.as_ref().unwrap();
-                if multishell_path.exists() {
+                let is_first_using = if multishell_path.exists() {
                     symlink::remove(multishell_path).expect("Can't remove symlink!");
-                }
+                    false
+                } else {
+                    true
+                };
                 let new_original = versions_dir.join(version.to_string());
                 symlink::link(new_original, multishell_path).expect("Can't create symlink!");
                 println!("Using {}", version.to_string());
+                if is_first_using {
+                    println!("Please run `rehash` in your shell");
+                }
             }
             None => todo!(),
         }
