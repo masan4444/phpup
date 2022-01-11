@@ -36,9 +36,10 @@ impl Config {
                         .to_str()
                         .unwrap()
                         .parse()
-                        .unwrap()
+                        .ok()
                 })
             })
+            .flatten()
             .flatten();
 
         Self {

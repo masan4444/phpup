@@ -1,4 +1,5 @@
 use super::{Command, Config};
+use crate::symlink;
 use std::path::Path;
 use structopt::StructOpt;
 
@@ -10,7 +11,7 @@ impl Command for Init {
         let symlink = create_symlink(&config.versions_dir);
         println!("export PHPUP_MULTISHELL_PATH={:?}", symlink);
         println!("export PATH={:?}:$PATH", symlink.join("bin"));
-        println!("hash -r");
+        println!("rehash");
         Ok(())
     }
 }
@@ -25,8 +26,8 @@ fn create_symlink(versions_dir: impl AsRef<Path>) -> std::path::PathBuf {
     };
 
     // TODO: default version
-    // symlink::link(versions_dir.as_ref().join("8.1.1"), &symlink_path)
-    //     .expect("Can't create symlink!");
+    // TODO: windows
+    // symlink::link(&default_version_dir, &symlink_path).expect("Can't create symlink!");
     symlink_path
 }
 
