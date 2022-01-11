@@ -33,3 +33,29 @@ impl Command for ListRemote {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn version_not_specified() {
+        let base_dir = tempfile::tempdir().unwrap();
+        let config = Config::default().with_base_dir(base_dir);
+        let cmd = ListRemote {
+            version: None,
+            old: true,
+        };
+        assert!(cmd.run(&config).is_ok());
+    }
+    #[test]
+    fn version_specified() {
+        let base_dir = tempfile::tempdir().unwrap();
+        let config = Config::default().with_base_dir(base_dir);
+        let cmd = ListRemote {
+            version: Some("7.2".parse().unwrap()),
+            old: false,
+        };
+        assert!(cmd.run(&config).is_ok());
+    }
+}

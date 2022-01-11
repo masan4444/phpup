@@ -1,7 +1,7 @@
 use crate::version::Version;
 use itertools::Itertools;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub trait Command {
     fn run(&self, config: &Config) -> anyhow::Result<()>;
@@ -29,7 +29,10 @@ impl Default for Config {
 
 impl Config {
     pub fn versions_dir(&self) -> PathBuf {
-        self.base_dir.join("versions").join("php")
+        let base_dir = self.base_dir.join("versions").join("php");
+        fs::create_dir_all(&base_dir)
+            .expect(&format!("Can't create base dirctory: {:?}", base_dir));
+        base_dir
     }
     pub fn current_version(&self) -> Option<Version> {
         self.multishell_path
@@ -65,6 +68,13 @@ impl Config {
             })
             .sorted()
             .collect()
+    }
+
+    #[cfg(test)]
+    pub fn with_base_dir(mut self, base_dir: impl AsRef<Path>) -> Self {
+        self.base_dir.clear();
+        self.base_dir.push(base_dir);
+        self
     }
 }
 
