@@ -19,6 +19,7 @@
 
 ## Error handling
 
+- [ ] `install`
 - [ ] curl.rs
 
 ## Performance

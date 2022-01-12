@@ -1,6 +1,6 @@
 # [WIP] phpup (PHP-up): Fast and Simple PHP version manager
 
-fast and simple PHP version manager written in rust
+:zap: Fast and simple PHP version manager, written in rust
 
 ## Features
 
