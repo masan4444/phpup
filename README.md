@@ -24,7 +24,7 @@ eval $(phpup init)
 
 - [TODO.md](TODO.md)
 
-## Reference
+## Inspired
 
 - [Schniz/fnm](https://github.com/Schniz/fnm)
-- [TaKO8Ki/frum](github.com/TaKO8Ki/frum)
+- [TaKO8Ki/frum](https://github.com/TaKO8Ki/frum)
