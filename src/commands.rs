@@ -1,5 +1,6 @@
 use crate::version::Version;
 use itertools::Itertools;
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -12,7 +13,7 @@ pub struct Config {
     multishell_path: Option<PathBuf>,
 }
 
-impl Default for Config {
+impl std::default::Default for Config {
     fn default() -> Self {
         let base_dir = dirs::home_dir()
             .expect("Can't get home directory")
@@ -29,10 +30,18 @@ impl Default for Config {
 
 impl Config {
     pub fn versions_dir(&self) -> PathBuf {
-        let base_dir = self.base_dir.join("versions").join("php");
-        fs::create_dir_all(&base_dir)
-            .expect(&format!("Can't create base dirctory: {:?}", base_dir));
-        base_dir
+        let versions_dir = self.base_dir.join("versions").join("php");
+        fs::create_dir_all(&versions_dir).expect(&format!(
+            "Can't create version dirctory: {:?}",
+            versions_dir
+        ));
+        versions_dir
+    }
+    pub fn aliases_dir(&self) -> PathBuf {
+        let aliases_dir = self.base_dir.join("aliases");
+        fs::create_dir_all(&aliases_dir)
+            .expect(&format!("Can't create alias dirctory: {:?}", aliases_dir));
+        aliases_dir
     }
     pub fn current_version(&self) -> Option<Version> {
         self.multishell_path
@@ -52,19 +61,40 @@ impl Config {
         let versions_dir = self.versions_dir();
         fs::read_dir(&versions_dir)
             .unwrap()
-            .flat_map(|entry| entry.ok())
+            .flat_map(|entry| entry)
             .flat_map(|path| path.path().file_name().map(ToOwned::to_owned))
             .flat_map(|dir_os_str| dir_os_str.into_string())
-            .flat_map(|dir_str| dir_str.parse::<Version>().ok())
+            .flat_map(|dir_str| dir_str.parse::<Version>())
             .filter(|version| {
                 versions_dir
                     .join(version.to_string())
+                    // TODO: windows
                     .join("bin")
                     .join("php")
                     .is_file()
             })
             .sorted()
             .collect()
+    }
+    pub fn aliases(&self) -> HashMap<Version, Vec<crate::alias::Alias>> {
+        use crate::alias::Alias;
+        let aliases_dir = self.aliases_dir();
+        let mut map: HashMap<Version, Vec<Alias>> = HashMap::new();
+        fs::read_dir(&aliases_dir)
+            .unwrap()
+            .flat_map(|entry| entry)
+            .flat_map(|path| path.path().file_name().map(ToOwned::to_owned))
+            .flat_map(|dir_os_str| dir_os_str.into_string())
+            .flat_map(|dir_str| dir_str.parse::<Alias>())
+            .flat_map(|alias: Alias| {
+                alias
+                    .resolve(&aliases_dir)
+                    .map(|(_, version)| (version, alias))
+            })
+            .for_each(|(version, alias)| {
+                map.entry(version).or_default().push(alias);
+            });
+        map
     }
 
     #[cfg(test)]
@@ -75,18 +105,22 @@ impl Config {
     }
 }
 
+mod alias;
 mod current;
 mod init;
 mod install;
 mod list_local;
 mod list_remote;
+mod unalias;
 mod uninstall;
 mod r#use;
 
+pub use alias::Alias;
 pub use current::Current;
 pub use init::Init;
 pub use install::Install;
 pub use list_local::ListLocal;
 pub use list_remote::ListRemote;
 pub use r#use::Use;
+pub use unalias::Unalias;
 pub use uninstall::Uninstall;

@@ -13,6 +13,8 @@ fn main() {
         SubCommand::Use(cmd) => cmd.run(&config),
         SubCommand::Current(cmd) => cmd.run(&config),
         SubCommand::Uninstall(cmd) => cmd.run(&config),
+        SubCommand::Alias(cmd) => cmd.run(&config),
+        SubCommand::Unalias(cmd) => cmd.run(&config),
     };
     if let Err(e) = result {
         eprintln!("{}: {}", "error".red().bold(), e);
@@ -49,4 +51,10 @@ pub enum SubCommand {
 
     #[structopt(name = "uninstall")]
     Uninstall(commands::Uninstall),
+
+    #[structopt(name = "alias")]
+    Alias(commands::Alias),
+
+    #[structopt(name = "unalias")]
+    Unalias(commands::Unalias),
 }

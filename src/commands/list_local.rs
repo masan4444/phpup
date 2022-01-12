@@ -1,5 +1,7 @@
 use super::{Command, Config};
-use crate::version::Version;
+use crate::{alias::Alias, version::Version};
+use colored::Colorize;
+use std::collections::HashMap;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -10,7 +12,8 @@ pub struct ListLocal {
 impl Command for ListLocal {
     fn run(&self, config: &Config) -> anyhow::Result<()> {
         let local_versions = config.local_versions();
-        let printer = Printer::new(&local_versions, config.current_version());
+        let aliases = config.aliases();
+        let printer = Printer::new(&local_versions, config.current_version(), &aliases);
 
         match &self.version {
             Some(version) => local_versions
@@ -30,24 +33,45 @@ impl Command for ListLocal {
 pub struct Printer<'a> {
     local_versions: &'a [Version],
     current_version: Option<Version>,
+    aliases: &'a HashMap<Version, Vec<Alias>>,
 }
 
 impl<'a> Printer<'a> {
-    pub fn new(local_versions: &'a [Version], current_version: Option<Version>) -> Self {
+    pub fn new(
+        local_versions: &'a [Version],
+        current_version: Option<Version>,
+        aliases: &'a HashMap<Version, Vec<Alias>>,
+    ) -> Self {
         Self {
             local_versions,
             current_version,
+            aliases,
         }
     }
     pub fn print_version(&self, version: Version) {
         let installed = self.local_versions.contains(&version);
         let used = self.current_version == Some(version);
-        println!(
-            "{:<2}{:<8}{}",
+        let aliases_str = self
+            .aliases
+            .get(&version)
+            .iter()
+            .flat_map(|aliases| aliases.iter())
+            .map(|alias| alias.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let output = format!(
+            "{:<2}{:<6} {}",
             if installed { "*" } else { "" },
             version.to_string(),
-            if used { "<-" } else { "" },
+            aliases_str.dimmed(),
         );
+
+        if used {
+            println!("{}", output.cyan())
+        } else {
+            println!("{}", output)
+        }
     }
     pub fn print_versions(&self, releaes: impl Iterator<Item = &'a Version>) {
         for version in releaes {
