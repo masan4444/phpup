@@ -37,7 +37,6 @@ impl Command for Install {
 
                 let release = release::fetch_latest(*version)?;
                 let install_version = release.version.unwrap();
-                println!("Installing {}...", install_version);
                 let url = release.source_url();
 
                 // .phpup/versions/php/3.1.4/.downloads-aaa/php-3.1.4
@@ -51,10 +50,17 @@ impl Command for Install {
 
                 let install_dir = versions_dir.join(install_version.to_string());
                 fs::create_dir_all(&install_dir).unwrap();
+                println!(
+                    "{} {}",
+                    "Installing".green().bold(),
+                    install_version.to_string().cyan()
+                );
+
                 let download_dir = tempfile::Builder::new()
                     .prefix(".download-")
                     .tempdir_in(&install_dir)?;
-                println!("Downloading {}...", url);
+                println!("{} {}", "Downloading".green().bold(), url);
+                println!("  to {} ...", download_dir.path().to_string_lossy());
                 Self::download_and_unpack(&url, &download_dir);
 
                 let source_dir = fs::read_dir(&download_dir.path())
@@ -63,9 +69,17 @@ impl Command for Install {
                     .unwrap()
                     .unwrap()
                     .path();
-                println!("Buiding...");
+                println!(
+                    "{} {} ...",
+                    "Buiding from".green().bold(),
+                    source_dir.to_string_lossy()
+                );
                 Self::build(&source_dir, &install_dir).unwrap();
-                println!("Successfully installed to {:?}", install_dir);
+                println!(
+                    "{} {}",
+                    "Installed to".green().bold(),
+                    install_dir.to_string_lossy()
+                );
             }
             None => {}
         };
