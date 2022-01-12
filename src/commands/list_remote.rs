@@ -52,7 +52,8 @@ impl Command for ListRemote {
         };
 
         let local_versions = config.local_versions();
-        let printer = Printer::new(&local_versions, config.current_version());
+        let aliases = config.aliases();
+        let printer = Printer::new(&local_versions, config.current_version(), &aliases);
         featch_and_print_versions(&query_versions, self.only_latest_patch, &printer)?;
         Ok(())
     }
