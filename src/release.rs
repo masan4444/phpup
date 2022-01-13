@@ -9,8 +9,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Can't parse json: {0}")]
-    JsonParseError(#[from] serde_json::error::Error),
     #[error("Can't find releases that matches {0}")]
     NotFoundReleaseError(Version),
     #[error("Receive error message from release site: {0}")]
@@ -28,11 +26,10 @@ fn fetch_and_parse(
         max.map_or("".to_owned(), |max| format!("&max={}", max)),
     );
     let url = &format!("{}{}", base_url, query);
-    // dbg!(url);
     let json = curl::get_as_slice(url);
-    // println!("{:?}", std::str::from_utf8(&json));
 
-    let resp: Response = serde_json::from_slice(&json).unwrap();
+    let resp: Response =
+        serde_json::from_slice(&json).unwrap_or_else(|_| panic!("Can't parse json from {}", url));
     match resp {
         Response::Map(releases) => Ok(releases),
         Response::One(release) => Ok([(release.version.unwrap(), release)].into_iter().collect()),

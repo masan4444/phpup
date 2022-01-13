@@ -1,11 +1,19 @@
 use crate::version::Version;
+use colored::Colorize;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 pub trait Command {
-    fn run(&self, config: &Config) -> anyhow::Result<()>;
+    type Error: std::error::Error;
+    fn run(&self, config: &Config) -> Result<(), Self::Error>;
+    fn apply(&self, config: &Config) {
+        if let Err(e) = self.run(config) {
+            eprintln!("{}: {}", "error".red().bold(), e);
+            std::process::exit(1);
+        }
+    }
 }
 
 pub struct Config {

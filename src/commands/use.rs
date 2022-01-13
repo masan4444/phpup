@@ -26,10 +26,13 @@ pub enum Error {
     NotInstalledError(Version),
     #[error("Not yet initialized; Need to run `eval $(phpup init)")]
     NoMultiShellPathError,
+    #[error(transparent)]
+    NotFoundAliasError(#[from] crate::alias::Error),
 }
 
 impl Command for Use {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, config: &Config) -> Result<(), Error> {
         let local_versions = config.local_versions();
 
         match &self.version_name {

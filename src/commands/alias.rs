@@ -17,7 +17,8 @@ pub enum Error {
 }
 
 impl Command for Alias {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, config: &Config) -> Result<(), Error> {
         let local_versions = config.local_versions();
         // TODO: funcionarize
         let version = local_versions

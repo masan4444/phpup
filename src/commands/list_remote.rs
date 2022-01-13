@@ -4,6 +4,7 @@ use crate::release;
 use crate::version::Version;
 use colored::Colorize;
 use structopt::StructOpt;
+use thiserror::Error;
 
 #[derive(StructOpt, Debug)]
 pub struct ListRemote {
@@ -23,8 +24,15 @@ pub struct ListRemote {
     only_latest_patch: bool,
 }
 
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    CantFetchReleaseError(#[from] release::Error),
+}
+
 impl Command for ListRemote {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, config: &Config) -> Result<(), Error> {
         let query_versions = match &self.version {
             Some(version) => {
                 if self.only_latest_patch && version.patch_version().is_some() {
@@ -63,7 +71,7 @@ fn featch_and_print_versions(
     query_versions: &[Version],
     latest_patch: bool,
     printer: &Printer,
-) -> anyhow::Result<()> {
+) -> Result<(), Error> {
     for &query_version in query_versions {
         let releases = release::fetch_all(query_version)?;
         let versions = releases.keys();

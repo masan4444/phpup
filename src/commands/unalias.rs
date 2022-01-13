@@ -16,7 +16,8 @@ pub enum Error {
 }
 
 impl Command for Unalias {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, config: &Config) -> Result<(), Error> {
         let alias_symlink = self.alias.symlink_path(&config.aliases_dir());
         if alias_symlink.exists() {
             fs::remove_file(&alias_symlink).expect("Can't remove alias symbolic link");

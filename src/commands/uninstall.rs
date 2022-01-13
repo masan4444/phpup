@@ -19,7 +19,8 @@ pub enum Error {
 }
 
 impl Command for Uninstall {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, config: &Config) -> Result<(), Error> {
         let local_versions = config.local_versions();
         let versions_dir = config.versions_dir();
         if local_versions.contains(&self.version) {
@@ -35,7 +36,7 @@ impl Command for Uninstall {
             }
 
             let version_dir = versions_dir.join(version.to_string());
-            fs::remove_dir_all(&version_dir)?;
+            fs::remove_dir_all(&version_dir).expect("Can't remove installed directory");
             println!(
                 "Version {} was removed successfully from {:?}",
                 version.to_string().cyan(),
