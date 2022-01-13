@@ -14,6 +14,8 @@ pub struct Uninstall {
 pub enum Error {
     #[error("Can't find installed version `{0}`")]
     NotInstalledError(Version),
+    #[error("Not yet initialized; Need to run `eval $(phpup init)")]
+    NoMultiShellPathError,
 }
 
 impl Command for Uninstall {
@@ -24,8 +26,12 @@ impl Command for Uninstall {
             let version = self.version;
 
             if config.current_version() == Some(version) {
-                symlink::remove(&config.multishell_path.as_ref().unwrap())
-                    .expect("Can't remove symlink!");
+                symlink::remove(
+                    &config
+                        .multishell_path()
+                        .ok_or(Error::NoMultiShellPathError)?,
+                )
+                .expect("Can't remove symlink!");
             }
 
             let version_dir = versions_dir.join(version.to_string());
