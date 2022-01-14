@@ -1,9 +1,9 @@
-use phpup::commands::{self, Command, Config};
+use phpup::commands::{self, Command};
+use phpup::config::Config;
 use structopt::StructOpt;
 
 fn main() {
-    let Cli { subcmd } = Cli::from_args();
-    let config = Config::default();
+    let Cli { config, subcmd } = Cli::from_args();
     match subcmd {
         SubCommand::Init(cmd) => cmd.apply(&config),
         SubCommand::ListRemote(cmd) => cmd.apply(&config),
@@ -20,6 +20,8 @@ fn main() {
 #[derive(StructOpt, Debug)]
 #[structopt(name = "phpup")]
 pub struct Cli {
+    #[structopt(flatten)]
+    pub config: Config,
     #[structopt(subcommand)]
     pub subcmd: SubCommand,
 }
