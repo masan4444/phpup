@@ -24,10 +24,15 @@ enum VersionName {
 pub enum Error {
     #[error("Can't find installed version `{0}`")]
     NotInstalledError(Version),
+    #[error("Not yet initialized; Need to run `eval $(phpup init)")]
+    NoMultiShellPathError,
+    #[error(transparent)]
+    NotFoundAliasError(#[from] crate::alias::Error),
 }
 
 impl Command for Use {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, config: &Config) -> Result<(), Error> {
         let local_versions = config.local_versions();
 
         match &self.version_name {
@@ -49,7 +54,9 @@ impl Command for Use {
                     }
                 };
 
-                let multishell_path = config.multishell_path.as_ref().unwrap();
+                let multishell_path = config
+                    .multishell_path()
+                    .ok_or(Error::NoMultiShellPathError)?;
                 let is_used_yet = multishell_path.exists();
                 if is_used_yet {
                     symlink::remove(multishell_path).expect("Can't remove symlink!");

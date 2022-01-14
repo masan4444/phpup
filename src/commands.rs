@@ -1,11 +1,19 @@
 use crate::version::Version;
+use colored::Colorize;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub trait Command {
-    fn run(&self, config: &Config) -> anyhow::Result<()>;
+    type Error: std::error::Error;
+    fn run(&self, config: &Config) -> Result<(), Self::Error>;
+    fn apply(&self, config: &Config) {
+        if let Err(e) = self.run(config) {
+            eprintln!("{}: {}", "error".red().bold(), e);
+            std::process::exit(1);
+        }
+    }
 }
 
 pub struct Config {
@@ -29,6 +37,9 @@ impl std::default::Default for Config {
 }
 
 impl Config {
+    pub fn multishell_path(&self) -> Option<&Path> {
+        self.multishell_path.as_ref().map(|path| path.as_path())
+    }
     pub fn versions_dir(&self) -> PathBuf {
         let versions_dir = self.base_dir.join("versions").join("php");
         fs::create_dir_all(&versions_dir).expect(&format!(

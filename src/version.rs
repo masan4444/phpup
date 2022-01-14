@@ -1,4 +1,3 @@
-use anyhow::Result;
 use derive_more::Display;
 use once_cell::sync::Lazy;
 use regex::Regex;

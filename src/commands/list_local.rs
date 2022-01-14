@@ -3,14 +3,19 @@ use crate::{alias::Alias, version::Version};
 use colored::Colorize;
 use std::collections::HashMap;
 use structopt::StructOpt;
+use thiserror::Error;
 
 #[derive(StructOpt, Debug)]
 pub struct ListLocal {
     version: Option<Version>,
 }
 
+#[derive(Error, Debug)]
+pub enum Error {}
+
 impl Command for ListLocal {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, config: &Config) -> Result<(), Error> {
         let local_versions = config.local_versions();
         let aliases = config.aliases();
         let printer = Printer::new(&local_versions, config.current_version(), &aliases);

@@ -14,22 +14,29 @@ pub struct Uninstall {
 pub enum Error {
     #[error("Can't find installed version `{0}`")]
     NotInstalledError(Version),
+    #[error("Not yet initialized; Need to run `eval $(phpup init)")]
+    NoMultiShellPathError,
 }
 
 impl Command for Uninstall {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, config: &Config) -> Result<(), Error> {
         let local_versions = config.local_versions();
         let versions_dir = config.versions_dir();
         if local_versions.contains(&self.version) {
             let version = self.version;
 
             if config.current_version() == Some(version) {
-                symlink::remove(&config.multishell_path.as_ref().unwrap())
-                    .expect("Can't remove symlink!");
+                symlink::remove(
+                    &config
+                        .multishell_path()
+                        .ok_or(Error::NoMultiShellPathError)?,
+                )
+                .expect("Can't remove symlink!");
             }
 
             let version_dir = versions_dir.join(version.to_string());
-            fs::remove_dir_all(&version_dir)?;
+            fs::remove_dir_all(&version_dir).expect("Can't remove installed directory");
             println!(
                 "Version {} was removed successfully from {:?}",
                 version.to_string().cyan(),

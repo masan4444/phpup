@@ -9,14 +9,22 @@ use std::path::Path;
 use std::process;
 use structopt::StructOpt;
 use tar::Archive;
+use thiserror::Error;
 
 #[derive(StructOpt, Debug)]
 pub struct Install {
     version: Option<Version>,
 }
 
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    CantFetchReleaseError(#[from] release::Error),
+}
+
 impl Command for Install {
-    fn run(&self, config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, config: &Config) -> Result<(), Error> {
         let versions_dir = config.versions_dir();
         let local_versions = config.local_versions();
 
@@ -58,7 +66,8 @@ impl Command for Install {
 
                 let download_dir = tempfile::Builder::new()
                     .prefix(".download-")
-                    .tempdir_in(&install_dir)?;
+                    .tempdir_in(&install_dir)
+                    .expect("Can't create a temporary directory to download to");
                 println!("{} {}", "Downloading".green().bold(), url);
                 println!("  to {} ...", download_dir.path().to_string_lossy());
                 Self::download_and_unpack(&url, &download_dir);

@@ -2,12 +2,17 @@ use super::{Command, Config};
 // use crate::symlink;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use thiserror::Error;
 
 #[derive(StructOpt, Debug)]
 pub struct Init {}
 
+#[derive(Error, Debug)]
+pub enum Error {}
+
 impl Command for Init {
-    fn run(&self, _config: &Config) -> anyhow::Result<()> {
+    type Error = Error;
+    fn run(&self, _config: &Config) -> Result<(), Error> {
         let symlink = create_symlink();
         println!("export PHPUP_MULTISHELL_PATH={:?}", symlink);
         println!("export PATH={:?}:$PATH", symlink.join("bin"));

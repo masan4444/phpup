@@ -1,25 +1,20 @@
-use colored::Colorize;
 use phpup::commands::{self, Command, Config};
 use structopt::StructOpt;
 
 fn main() {
     let Cli { subcmd } = Cli::from_args();
     let config = Config::default();
-    let result = match subcmd {
-        SubCommand::Init(cmd) => cmd.run(&config),
-        SubCommand::ListRemote(cmd) => cmd.run(&config),
-        SubCommand::Install(cmd) => cmd.run(&config),
-        SubCommand::List(cmd) => cmd.run(&config),
-        SubCommand::Use(cmd) => cmd.run(&config),
-        SubCommand::Current(cmd) => cmd.run(&config),
-        SubCommand::Uninstall(cmd) => cmd.run(&config),
-        SubCommand::Alias(cmd) => cmd.run(&config),
-        SubCommand::Unalias(cmd) => cmd.run(&config),
+    match subcmd {
+        SubCommand::Init(cmd) => cmd.apply(&config),
+        SubCommand::ListRemote(cmd) => cmd.apply(&config),
+        SubCommand::Install(cmd) => cmd.apply(&config),
+        SubCommand::List(cmd) => cmd.apply(&config),
+        SubCommand::Use(cmd) => cmd.apply(&config),
+        SubCommand::Current(cmd) => cmd.apply(&config),
+        SubCommand::Uninstall(cmd) => cmd.apply(&config),
+        SubCommand::Alias(cmd) => cmd.apply(&config),
+        SubCommand::Unalias(cmd) => cmd.apply(&config),
     };
-    if let Err(e) = result {
-        eprintln!("{}: {}", "error".red().bold(), e);
-        std::process::exit(1);
-    }
 }
 
 #[derive(StructOpt, Debug)]
