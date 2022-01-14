@@ -39,7 +39,7 @@ impl Command for ListRemote {
                     println!(
                         "{}: `--latest-patch` is available only if patch number is NOT specified: {}",
                         "warning".yellow().bold(),
-                        version.to_string()
+                        version
                     );
                 }
                 vec![*version]

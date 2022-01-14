@@ -38,7 +38,7 @@ impl Command for Install {
                     println!(
                         "{}: Already installed {}",
                         "warning".yellow().bold(),
-                        installed_version.to_string()
+                        installed_version
                     );
                     return Ok(());
                 }

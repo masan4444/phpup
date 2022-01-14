@@ -34,11 +34,7 @@ impl Command for Alias {
         let version_dir = config.versions_dir().join(version.to_string());
         symlink::link(version_dir, alias_symlink).expect("Can't create symlink!");
 
-        println!(
-            "Set `{}` as the alias to {}",
-            self.alias,
-            version.to_string(),
-        );
+        println!("Set `{}` as the alias to {}", self.alias, version);
         Ok(())
     }
 }

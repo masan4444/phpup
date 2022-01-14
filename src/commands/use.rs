@@ -62,7 +62,7 @@ impl Command for Use {
                     symlink::remove(multishell_path).expect("Can't remove symlink!");
                 }
                 symlink::link(version_dir, multishell_path).expect("Can't create symlink!");
-                println!("Using {}", version.to_string());
+                println!("Using {}", version);
                 if !is_used_yet {
                     println!(
                         "{}: Need to type `rehash` in this shell (only first time)",

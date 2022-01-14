@@ -1,3 +1,4 @@
+use colored::Colorize;
 use derive_more::Display;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -141,7 +142,7 @@ impl FromStr for Version {
         }
         let cap = VERSION_REGEX
             .captures(s)
-            .ok_or(Error::InvalidVersionFormat(s.to_string()))?;
+            .ok_or(Error::InvalidVersionFormat(s.to_owned()))?;
         let to_num = |m: regex::Match| m.as_str().parse().unwrap();
         let major = Major {
             version: to_num(cap.get(1).unwrap()),
@@ -162,8 +163,7 @@ impl FromStr for Version {
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
+        format!(
             "{}{}{}{}",
             self.major_version(),
             self.minor_version()
@@ -176,6 +176,7 @@ impl fmt::Display for Version {
                 self.pre_version().unwrap()
             )),
         )
+        .fmt(f)
     }
 }
 

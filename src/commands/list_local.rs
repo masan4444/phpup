@@ -68,7 +68,7 @@ impl<'a> Printer<'a> {
         let output = format!(
             "{:<2}{:<6} {}",
             if installed { "*" } else { "" },
-            version.to_string(),
+            version,
             aliases_str.dimmed(),
         );
 
