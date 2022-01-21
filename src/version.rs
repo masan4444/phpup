@@ -1,4 +1,3 @@
-use colored::Colorize;
 use derive_more::Display;
 use once_cell::sync::Lazy;
 use regex::Regex;

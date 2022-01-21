@@ -1,15 +1,15 @@
 use crate::version::Version;
+use clap;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub struct Config {
-    #[structopt(long = "phpup-dir", global = true, env = "PHPUP_DIR", global = true)]
+    #[clap(long = "phpup-dir", global = true, env = "PHPUP_DIR", global = true)]
     base_dir: Option<PathBuf>,
-    #[structopt(env = "PHPUP_MULTISHELL_PATH", global = true, hidden = true)]
+    #[clap(env = "PHPUP_MULTISHELL_PATH", global = true, hide = true)]
     multishell_path: Option<PathBuf>,
 }
 

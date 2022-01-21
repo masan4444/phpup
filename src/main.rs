@@ -1,9 +1,9 @@
+use clap::Parser;
 use phpup::commands::{self, Command};
 use phpup::config::Config;
-use structopt::StructOpt;
 
 fn main() {
-    let Cli { config, subcmd } = Cli::from_args();
+    let Cli { config, subcmd } = Cli::parse();
     match subcmd {
         SubCommand::Init(cmd) => cmd.apply(&config),
         SubCommand::ListRemote(cmd) => cmd.apply(&config),
@@ -17,41 +17,41 @@ fn main() {
     };
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "phpup")]
+#[derive(clap::Parser, Debug)]
+#[clap(name = "phpup")]
 pub struct Cli {
-    #[structopt(flatten)]
+    #[clap(flatten)]
     pub config: Config,
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     pub subcmd: SubCommand,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub enum SubCommand {
-    #[structopt(name = "init")]
+    #[clap(name = "init")]
     Init(commands::Init),
 
-    #[structopt(name = "list-remote", visible_aliases = &["ls-remote"])]
+    #[clap(name = "list-remote", visible_aliases = &["ls-remote"])]
     ListRemote(commands::ListRemote),
 
-    #[structopt(name = "install")]
+    #[clap(name = "install")]
     Install(commands::Install),
 
-    #[structopt(name = "list", visible_aliases = &["ls"])]
+    #[clap(name = "list", visible_aliases = &["ls"])]
     List(commands::ListLocal),
 
-    #[structopt(name = "use")]
+    #[clap(name = "use")]
     Use(commands::Use),
 
-    #[structopt(name = "current")]
+    #[clap(name = "current")]
     Current(commands::Current),
 
-    #[structopt(name = "uninstall")]
+    #[clap(name = "uninstall")]
     Uninstall(commands::Uninstall),
 
-    #[structopt(name = "alias")]
+    #[clap(name = "alias")]
     Alias(commands::Alias),
 
-    #[structopt(name = "unalias")]
+    #[clap(name = "unalias")]
     Unalias(commands::Unalias),
 }

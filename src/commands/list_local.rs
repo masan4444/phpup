@@ -1,11 +1,11 @@
 use super::{Command, Config};
 use crate::{alias::Alias, version::Version};
+use clap;
 use colored::Colorize;
 use std::collections::HashMap;
-use structopt::StructOpt;
 use thiserror::Error;
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub struct ListLocal {
     version: Option<Version>,
 }

@@ -1,8 +1,8 @@
 use super::{Command, Config};
-use structopt::StructOpt;
+use clap;
 use thiserror::Error;
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub struct Current {}
 
 #[derive(Error, Debug)]

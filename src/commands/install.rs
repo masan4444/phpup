@@ -2,16 +2,16 @@ use super::{Command, Config};
 use crate::curl;
 use crate::release;
 use crate::version::Version;
+use clap;
 use colored::Colorize;
 use flate2::read::GzDecoder;
 use std::fs;
 use std::path::Path;
 use std::process;
-use structopt::StructOpt;
 use tar::Archive;
 use thiserror::Error;
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub struct Install {
     version: Option<Version>,
 }
