@@ -2,15 +2,15 @@ use super::{Command, Config};
 use crate::alias::Alias;
 use crate::symlink;
 use crate::version::Version;
+use clap;
 use colored::Colorize;
 use derive_more::Display;
 use std::str::FromStr;
-use structopt::StructOpt;
 use thiserror::Error;
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub struct Use {
-    #[structopt(name = "version | alias", help = "semantic version or alias name")]
+    #[clap(name = "version | alias", help = "semantic version or alias name")]
     version_name: Option<VersionName>,
 }
 

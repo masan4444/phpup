@@ -1,10 +1,10 @@
 use super::{Command, Config};
 use crate::alias::Alias;
+use clap;
 use std::fs;
-use structopt::StructOpt;
 use thiserror::Error;
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub struct Unalias {
     alias: Alias,
 }

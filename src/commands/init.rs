@@ -1,10 +1,10 @@
 use super::{Command, Config};
 // use crate::symlink;
+use clap;
 use std::path::PathBuf;
-use structopt::StructOpt;
 use thiserror::Error;
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub struct Init {}
 
 #[derive(Error, Debug)]

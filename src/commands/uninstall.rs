@@ -1,11 +1,11 @@
 use super::{Command, Config};
 use crate::{symlink, version::Version};
+use clap;
 use colored::Colorize;
 use std::fs;
-use structopt::StructOpt;
 use thiserror::Error;
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub struct Uninstall {
     version: Version,
 }

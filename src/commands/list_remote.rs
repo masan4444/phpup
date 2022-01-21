@@ -2,21 +2,21 @@ use super::Config;
 use super::{list_local::Printer, Command};
 use crate::release;
 use crate::version::Version;
+use clap;
 use colored::Colorize;
-use structopt::StructOpt;
 use thiserror::Error;
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Parser, Debug)]
 pub struct ListRemote {
     version: Option<Version>,
-    #[structopt(
+    #[clap(
         short,
         long,
         conflicts_with = "version",
         help = "List all old versions"
     )]
     all: bool,
-    #[structopt(
+    #[clap(
         long = "latest-patch",
         visible_alias = "lp",
         help = "List latest patch release (avairable only if patch number is NOt specified)"
