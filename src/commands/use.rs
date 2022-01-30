@@ -1,4 +1,4 @@
-use super::{Command, Config};
+use super::{Command, Config, ConfigError};
 use crate::alias::Alias;
 use crate::symlink;
 use crate::version::Version;
@@ -24,8 +24,8 @@ enum VersionName {
 pub enum Error {
     #[error("Can't find installed version `{0}`")]
     NotInstalledError(Version),
-    #[error("Not yet initialized; Need to run `eval $(phpup init)")]
-    NoMultiShellPathError,
+    #[error(transparent)]
+    NoMultiShellPathError(#[from] ConfigError),
     #[error(transparent)]
     NotFoundAliasError(#[from] crate::alias::Error),
 }
@@ -54,9 +54,7 @@ impl Command for Use {
                     }
                 };
 
-                let multishell_path = config
-                    .multishell_path()
-                    .ok_or(Error::NoMultiShellPathError)?;
+                let multishell_path = config.multishell_path()?;
                 let is_used_yet = multishell_path.exists();
                 if is_used_yet {
                     symlink::remove(multishell_path).expect("Can't remove symlink!");

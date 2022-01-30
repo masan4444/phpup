@@ -4,6 +4,7 @@ use itertools::Itertools;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
 pub struct Config {
@@ -11,6 +12,12 @@ pub struct Config {
     base_dir: Option<PathBuf>,
     #[clap(env = "PHPUP_MULTISHELL_PATH", global = true, hide = true)]
     multishell_path: Option<PathBuf>,
+}
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Not yet initialized; Need to run `eval \"$(phpup init)\"`")]
+    NoMultiShellPathError,
 }
 
 impl std::default::Default for Config {
@@ -23,8 +30,11 @@ impl std::default::Default for Config {
 }
 
 impl Config {
-    pub fn multishell_path(&self) -> Option<&Path> {
-        self.multishell_path.as_ref().map(|path| path.as_path())
+    pub fn multishell_path(&self) -> Result<&Path, Error> {
+        self.multishell_path
+            .as_ref()
+            .map(|path| path.as_path())
+            .ok_or(Error::NoMultiShellPathError)
     }
     pub fn base_dir(&self) -> PathBuf {
         if let Some(base_dir) = self.base_dir.as_ref() {

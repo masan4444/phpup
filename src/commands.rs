@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::config::Error as ConfigError;
 use colored::Colorize;
 
 pub trait Command {
