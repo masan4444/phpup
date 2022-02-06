@@ -63,7 +63,7 @@ impl Command for Use {
                 println!("Using {}", version);
                 if !is_used_yet {
                     println!(
-                        "{}: Need to type `rehash` in this shell (only first time)",
+                        "{}: Need to type `rehash` in this shell if you are using zsh (only first time)",
                         "warning".yellow().bold()
                     );
                 }
