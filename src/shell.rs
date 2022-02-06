@@ -46,7 +46,6 @@ impl Shell {
                 .split('/')
                 .last()
                 .unwrap();
-            println!("{}", binary);
             if let Ok(shell) = Self::from_str(binary) {
                 return Ok(shell);
             }
