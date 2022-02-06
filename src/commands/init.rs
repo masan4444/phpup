@@ -1,22 +1,35 @@
 use super::{Command, Config};
 // use crate::symlink;
+use crate::shell::{self, Shell};
 use clap;
 use std::path::PathBuf;
 use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
-pub struct Init {}
+pub struct Init {
+    #[clap(long, possible_values(shell::available_shells()))]
+    shell: Option<Shell>,
+}
 
 #[derive(Error, Debug)]
-pub enum Error {}
+pub enum Error {
+    #[error("Can't detect using shell: {0}; You may be using unsupported shell")]
+    UndetectedShell(#[from] shell::ShellDetectError),
+}
 
 impl Command for Init {
     type Error = Error;
     fn run(&self, _config: &Config) -> Result<(), Error> {
+        let shell = self.shell.unwrap_or(Shell::detect_shell()?);
         let symlink = create_symlink();
-        println!("export PHPUP_MULTISHELL_PATH={:?}", symlink);
-        println!("export PATH={:?}:$PATH", symlink.join("bin"));
-        println!("rehash");
+        let mut eval_stmts = vec![
+            shell.set_env("PHPUP_MULTISHELL_PATH", symlink.to_str().unwrap()),
+            shell.set_path(symlink.join("bin").to_str().unwrap()),
+        ];
+        if let Some(rehash) = shell.rehash() {
+            eval_stmts.push(rehash)
+        }
+        println!("{}", eval_stmts.join("\n"));
         Ok(())
     }
 }
@@ -43,3 +56,6 @@ fn generate_symlink_path() -> PathBuf {
         chrono::Utc::now().timestamp_millis(),
     ))
 }
+
+#[cfg(test)]
+mod tests {}

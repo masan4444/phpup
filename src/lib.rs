@@ -3,5 +3,6 @@ pub mod commands;
 pub mod config;
 pub mod curl;
 pub mod release;
+pub mod shell;
 pub mod symlink;
 pub mod version;
