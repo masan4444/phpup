@@ -8,9 +8,12 @@ use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
 pub struct Config {
-    #[clap(long = "phpup-dir", global = true, env = "PHPUP_DIR", global = true)]
+    /// Specify a custom PHP-UP directory
+    #[clap(long = "phpup-dir", env = "PHPUP_DIR")]
     base_dir: Option<PathBuf>,
-    #[clap(env = "PHPUP_MULTISHELL_PATH", global = true, hide = true)]
+
+    /// Specify a custom symbolic link used for version switching
+    #[clap(long, env = "PHPUP_MULTISHELL_PATH", hide = true)]
     multishell_path: Option<PathBuf>,
 }
 

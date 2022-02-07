@@ -14,6 +14,7 @@ pub trait Command {
 }
 
 mod alias;
+mod completions;
 mod current;
 mod init;
 mod install;
@@ -24,6 +25,7 @@ mod uninstall;
 mod r#use;
 
 pub use alias::Alias;
+pub use completions::Completions;
 pub use current::Current;
 pub use init::Init;
 pub use install::Install;

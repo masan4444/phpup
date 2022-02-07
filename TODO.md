@@ -8,7 +8,7 @@
 - [ ] auto version switching via `.php-version`
 - [ ] colorize output
 - [ ] embed system php version
-- [ ] shell completion
+- [x] shell completion
 - [ ] pre-release install (`8.1.0alpha2` etc..)
 - [ ] install with extention (`+mysql` etc..)
 
@@ -35,7 +35,7 @@
 
 ## Cross-platform support
 
-- [ ] bash
+- [x] bash
 - [ ] fish
 - [ ] windows
 

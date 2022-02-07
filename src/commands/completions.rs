@@ -1,0 +1,52 @@
+use super::{Command, Config};
+use crate::cli::Cli;
+use crate::shell::{self, Shell};
+use clap::{self, IntoApp};
+use clap_complete::Generator;
+use thiserror::Error;
+
+#[derive(clap::Parser, Debug)]
+pub struct Completions {
+    #[clap(long, possible_values(shell::available_shells()))]
+    shell: Option<Shell>,
+}
+
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Can't detect using shell: {0}; You may be using unsupported shell")]
+    UndetectedShell(#[from] shell::ShellDetectError),
+}
+
+impl Command for Completions {
+    type Error = Error;
+
+    fn run(&self, _: &Config) -> Result<(), Error> {
+        let shell = self.shell.unwrap_or(Shell::detect_shell()?).to_clap_shell();
+        let app = Cli::into_app();
+        let mut stdout = std::io::stdout();
+        shell.generate(&app, &mut stdout);
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn for_bash() {
+        let config = Config::default();
+        let completions = Completions {
+            shell: Some(shell::Shell::Bash),
+        };
+        assert!(completions.run(&config).is_ok());
+    }
+    #[test]
+    fn for_zsh() {
+        let config = Config::default();
+        let completions = Completions {
+            shell: Some(shell::Shell::Zsh),
+        };
+        assert!(completions.run(&config).is_ok());
+    }
+}

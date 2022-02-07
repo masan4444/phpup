@@ -73,12 +73,18 @@ impl Shell {
             Zsh => Some("rehash".to_string()),
         }
     }
+    pub fn to_clap_shell(&self) -> clap_complete::Shell {
+        match &self {
+            Bash => clap_complete::Shell::Bash,
+            Zsh => clap_complete::Shell::Zsh,
+        }
+    }
 }
 
 #[derive(Debug, Error)]
 pub enum ParseShellError {
     #[error("Unknown shell: {0}")]
-    UnsupportedShell(String),
+    UnknownShell(String),
 }
 impl FromStr for Shell {
     type Err = ParseShellError;
@@ -87,7 +93,7 @@ impl FromStr for Shell {
         match s {
             "bash" | "dash" => Ok(Bash),
             "zsh" => Ok(Zsh),
-            _ => Err(ParseShellError::UnsupportedShell(s.to_owned())),
+            _ => Err(ParseShellError::UnknownShell(s.to_owned())),
         }
     }
 }
@@ -101,7 +107,7 @@ pub enum ProcessInfoError {
     #[error(transparent)]
     IOError(#[from] std::io::Error),
     #[error("failed to exec 'ps' command")]
-    FaildExecError,
+    ExitFailedError,
     #[error("can't parse 'ps' command output: {0}")]
     ParseError(String),
 }
@@ -121,7 +127,7 @@ fn get_process_info(pid: u32) -> Result<ProcessInfo, ProcessInfoError> {
 
     match child.wait() {
         Ok(status) if status.success() => {}
-        _ => return Err(FaildExecError),
+        _ => return Err(ExitFailedError),
     }
 
     let mut line = String::new();
