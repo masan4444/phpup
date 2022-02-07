@@ -26,19 +26,15 @@ impl Command for Install {
     type Error = Error;
     fn run(&self, config: &Config) -> Result<(), Error> {
         let versions_dir = config.versions_dir();
-        let local_versions = config.local_versions();
 
         match &self.version {
             Some(version) => {
-                let installed_version = local_versions
-                    .iter()
-                    .filter(|local_version| version.includes(local_version))
-                    .max();
+                let installed_version = config.latest_local_version_included_in(version);
                 if let Some(installed_version) = installed_version {
                     println!(
-                        "{}: Already installed {}",
+                        "{}: Already installed PHP {}",
                         "warning".yellow().bold(),
-                        installed_version
+                        installed_version.to_string().cyan()
                     );
                     return Ok(());
                 }

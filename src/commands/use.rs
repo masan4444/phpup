@@ -42,37 +42,26 @@ pub enum Error {
 impl Command for Use {
     type Error = Error;
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let local_versions = config.local_versions();
-
         let request_version = match &self.version_name {
-            Some(version_name) => {
-                match version_name {
-                    VersionName::Version(version) => {
-                        // find latest version installed
-                        *local_versions
-                            .iter()
-                            .filter(|local_version| version.includes(local_version))
-                            .max()
-                            .ok_or(Error::NotInstalledError(*version))?
-                    }
-                    VersionName::Alias(alias) => {
-                        let (_, version) = alias.resolve(config.aliases_dir())?;
-                        println!("Resolve alias: {} -> {}", alias, version.to_string().cyan());
-                        version
-                    }
+            Some(version_name) => match version_name {
+                VersionName::Version(version) => config
+                    .latest_local_version_included_in(version)
+                    .ok_or(Error::NotInstalledError(*version))?,
+                VersionName::Alias(alias) => {
+                    let (_, version) = alias.resolve(config.aliases_dir())?;
+                    println!("Resolve alias: {} -> {}", alias, version.to_string().cyan());
+                    version
                 }
-            }
+            },
             None => {
                 let (version, version_file_path) = self.version_file.get_version()?;
                 println!(
-                    "Detect {} from {:?}",
+                    "Detected {} from {:?}",
                     version.to_string().cyan(),
                     version_file_path
                 );
-                *local_versions
-                    .iter()
-                    .filter(|local_version| version.includes(local_version))
-                    .max()
+                config
+                    .latest_local_version_included_in(&version)
                     .ok_or(Error::NotInstalledError(version))?
             }
         };
