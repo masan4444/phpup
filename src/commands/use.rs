@@ -16,6 +16,10 @@ pub struct Use {
 
     #[clap(flatten)]
     version_file: VersionFile,
+
+    /// Don't output a message to stdout
+    #[clap(long)]
+    quiet: bool,
 }
 
 #[derive(Debug, Display)]
@@ -39,6 +43,14 @@ pub enum Error {
     NoVersionFromFileError(#[from] version_file::Error),
 }
 
+macro_rules! outln {
+    ($disp:expr, $($arg:tt)*) => {
+        if $disp {
+            println!($($arg)*);
+        };
+    };
+}
+
 impl Command for Use {
     type Error = Error;
     fn run(&self, config: &Config) -> Result<(), Error> {
@@ -49,13 +61,22 @@ impl Command for Use {
                     .ok_or(Error::NotInstalledError(*version))?,
                 VersionName::Alias(alias) => {
                     let (_, version) = alias.resolve(config.aliases_dir())?;
-                    println!("Resolve alias: {} -> {}", alias, version.to_string().cyan());
+                    outln!(
+                        !self.quiet,
+                        "Resolve alias: {} -> {}",
+                        alias,
+                        version.to_string().cyan()
+                    );
                     version
                 }
             },
             None => {
-                let (version, version_file_path) = self.version_file.get_version()?;
-                println!(
+                let (version, version_file_path) = match self.version_file.get_version() {
+                    Err(version_file::Error::NoVersionFileError(_)) if self.quiet => return Ok(()),
+                    other => other,
+                }?;
+                outln!(
+                    !self.quiet,
                     "Detected {} from {:?}",
                     version.to_string().cyan(),
                     version_file_path
@@ -73,9 +94,14 @@ impl Command for Use {
         symlink::remove(multishell_path).expect("Can't remove symlink!");
         symlink::link(version_dir, multishell_path).expect("Can't create symlink!");
 
-        println!("Using PHP {}", request_version.to_string().cyan());
+        outln!(
+            !self.quiet,
+            "Using PHP {}",
+            request_version.to_string().cyan()
+        );
         if !is_used_yet {
-            println!(
+            outln!(
+                !self.quiet,
                 "{}: Need to type `rehash` in this shell if you are using zsh (only first time)",
                 "warning".yellow().bold()
             );

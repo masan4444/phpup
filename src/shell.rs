@@ -1,3 +1,5 @@
+use crate::version_file::VersionFile;
+use indoc::formatdoc;
 use std::path::Path;
 use std::str::FromStr;
 use thiserror::Error;
@@ -14,7 +16,7 @@ pub const fn available_shells() -> &'static [&'static str] {
 
 #[derive(Debug, Error)]
 pub enum ShellDetectError {
-    #[error("parent process tracing count reached the limit: {MAX_ITERATIONS}")]
+    #[error("parent process tracing count reached the limit: {MAX_SEARCH_ITERATIONS}")]
     TracingParentLimitError,
     #[error("reached first process PID=0 when tracing processes")]
     ReachedFirstProcessError,
@@ -22,9 +24,10 @@ pub enum ShellDetectError {
     ProcessInfoError(#[from] ProcessInfoError),
 }
 
-const MAX_ITERATIONS: u8 = 10;
+const MAX_SEARCH_ITERATIONS: u8 = 10;
 
 use Shell::*;
+
 impl Shell {
     pub fn detect_shell() -> Result<Self, ShellDetectError> {
         use ShellDetectError::*;
@@ -33,7 +36,7 @@ impl Shell {
         let mut visited = 0;
 
         loop {
-            if visited > MAX_ITERATIONS {
+            if visited > MAX_SEARCH_ITERATIONS {
                 return Err(TracingParentLimitError);
             }
             if pid == 0 {
@@ -64,6 +67,46 @@ impl Shell {
         match &self {
             Bash | Zsh => {
                 format!("export {}={:?}", name, value)
+            }
+        }
+    }
+    pub fn auto_switch_hook(&self, version_file: &VersionFile) -> String {
+        let version_file_name = version_file.filename().to_str().unwrap();
+        let is_recursive_version_file = if version_file.is_recursive() {
+            "--recursive-version-file"
+        } else {
+            ""
+        };
+        let phpup_use = format!(
+            "phpup use --quiet --version-file-name {} {}",
+            version_file_name, is_recursive_version_file
+        );
+
+        match &self {
+            Bash => {
+                formatdoc! {r#"
+                    __phpup_use() {{
+                        {phpup_use}
+                    }}
+                    __phpupcd() {{
+                        \cd "$@" || return $?
+                        __phpup_use
+                    }}
+                    alias cd=__phpupcd
+                    __phpup_use"#,
+                    phpup_use = phpup_use
+                }
+            }
+            Zsh => {
+                formatdoc! {r#"
+                    autoload -U add-zsh-hook
+                    _phpup_autoload_hook () {{
+                        {phpup_use}
+                    }}
+                    add-zsh-hook chpwd _phpup_autoload_hook \
+                        && _phpup_autoload_hook"#,
+                    phpup_use = phpup_use
+                }
             }
         }
     }

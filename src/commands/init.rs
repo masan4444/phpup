@@ -1,14 +1,23 @@
 use super::{Command, Config};
 // use crate::symlink;
 use crate::shell::{self, Shell};
+use crate::version_file::VersionFile;
 use clap;
 use std::path::PathBuf;
 use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
 pub struct Init {
+    /// Spacify a shell type
     #[clap(long, possible_values(shell::available_shells()))]
     shell: Option<Shell>,
+
+    /// Enable automatically version switching when changing directory
+    #[clap(long, visible_alias = "auto")]
+    auto_switch: bool,
+
+    #[clap(flatten)]
+    version_file: VersionFile,
 }
 
 #[derive(Error, Debug)]
@@ -26,6 +35,9 @@ impl Command for Init {
             shell.set_env("PHPUP_MULTISHELL_PATH", symlink.to_str().unwrap()),
             shell.set_path(symlink.join("bin").to_str().unwrap()),
         ];
+        if self.auto_switch {
+            eval_stmts.push(shell.auto_switch_hook(&self.version_file))
+        }
         if let Some(rehash) = shell.rehash() {
             eval_stmts.push(rehash)
         }

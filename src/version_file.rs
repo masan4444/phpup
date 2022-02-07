@@ -8,12 +8,16 @@ const DEFAULT_VERSION_FILE_NAME: &str = ".php-version";
 #[derive(clap::Parser, Debug)]
 pub struct VersionFile {
     /// Spacify a custom version file name
-    #[clap(long, env = "PHPUP_VERSION_FILE_NAME", default_value = DEFAULT_VERSION_FILE_NAME)]
-    version_file_name: PathBuf,
+    #[clap(long = "version-file-name", env = "PHPUP_VERSION_FILE_NAME", default_value = DEFAULT_VERSION_FILE_NAME)]
+    filename: PathBuf,
 
     /// Enable recursive search in a parent dirctory for a version file
-    #[clap(long, env = "PHPUP_RECURSIVE_VERSION_FILE")]
-    recursive_version_file: bool,
+    #[clap(
+        long = "recursive-version-file",
+        visible_alias = "recursive",
+        env = "PHPUP_RECURSIVE_VERSION_FILE"
+    )]
+    is_recursive: bool,
 }
 
 #[derive(Error, Debug)]
@@ -29,13 +33,19 @@ pub enum Error {
 }
 
 impl VersionFile {
+    pub fn is_recursive(&self) -> bool {
+        self.is_recursive
+    }
+    pub fn filename(&self) -> &Path {
+        self.filename.as_path()
+    }
     pub fn get_version(&self) -> Result<(Version, PathBuf), Error> {
         let current_dir = std::env::current_dir().expect("Can't get a current directory");
-        if self.recursive_version_file {
+        if self.is_recursive {
             self.search_recursively(current_dir)
         } else {
             self.search_current(current_dir)?
-                .ok_or(Error::NoVersionFileError(self.version_file_name.clone()))
+                .ok_or(Error::NoVersionFileError(self.filename.clone()))
         }
     }
 
@@ -43,7 +53,7 @@ impl VersionFile {
         &self,
         current_dir: impl AsRef<Path>,
     ) -> Result<Option<(Version, PathBuf)>, Error> {
-        let filepath = current_dir.as_ref().join(self.version_file_name.as_path());
+        let filepath = current_dir.as_ref().join(self.filename.as_path());
         fs::read_to_string(&filepath)
             .ok()
             .map(|string| {
@@ -72,7 +82,7 @@ impl VersionFile {
             }
             searching_dir = dir.parent()
         }
-        Err(Error::NoVersionFileError(self.version_file_name.clone()))
+        Err(Error::NoVersionFileError(self.filename.clone()))
     }
 }
 
@@ -84,8 +94,8 @@ mod test {
     #[test]
     fn search_current_success() {
         let module = VersionFile {
-            version_file_name: PathBuf::from(".php-version"),
-            recursive_version_file: false,
+            filename: PathBuf::from(".php-version"),
+            is_recursive: false,
         };
 
         let current_dir = tempfile::tempdir().unwrap();
@@ -107,8 +117,8 @@ mod test {
     #[test]
     fn search_recursively_success() {
         let module = VersionFile {
-            version_file_name: PathBuf::from(".php-version"),
-            recursive_version_file: true,
+            filename: PathBuf::from(".php-version"),
+            is_recursive: true,
         };
 
         let root_dir = tempfile::tempdir().unwrap();
