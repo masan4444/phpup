@@ -77,6 +77,9 @@ impl Version {
             minor: None,
         }
     }
+    /// Returns `true` if `self` includes `other`.
+    /// - `3` includes `3`, `3.x`, `3.x.x`
+    /// - `3.1` includes `3.1`, `3.1.x`
     pub fn includes(&self, other: &Self) -> bool {
         self.major_version() == other.major_version()
             && self.minor.map_or(true, |Minor { version, patch }| {
