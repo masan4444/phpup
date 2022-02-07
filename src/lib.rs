@@ -7,3 +7,4 @@ pub mod release;
 pub mod shell;
 pub mod symlink;
 pub mod version;
+pub mod version_file;
