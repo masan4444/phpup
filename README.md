@@ -1,30 +1,32 @@
-# [WIP] phpup (PHP-up): Fast and Simple PHP version manager
+# [WIP] PHP-UP: Fast and Simple PHP version manager
 
 :zap: Fast and simple PHP version manager, written in rust
 
-## Features
+## :sparkles: Features
 
 - No requirements for system PHP installation
-- [WIP] Cross-platform support (macOS, Linux)
+- Cross-platform support (macOS, Linux)
 - [WIP] Automatically version switching with `.php-version`
 
-## Installation
+## :wrench: Installation
 
 ### shell setup
 
-#### bash or zsh
+#### Bash or Zsh
+
+Add the following to your `.bashrc` or `.zshrc`
 
 ```bash
-eval $(phpup init)
+eval "$(phpup init)"
 ```
 
-## Usage
+## :hammer: Usage
 
-## Contribution
+## :pencil2: Contribution
 
 - [TODO.md](TODO.md)
 
-## Inspired
+## :paperclip: Inspired
 
 - [Schniz/fnm](https://github.com/Schniz/fnm)
 - [TaKO8Ki/frum](https://github.com/TaKO8Ki/frum)
