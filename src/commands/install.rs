@@ -34,18 +34,9 @@ impl Command for Install {
     fn run(&self, config: &Config) -> Result<(), Error> {
         let versions_dir = config.versions_dir();
 
-        let request_version = match self.version {
-            Some(version) => version,
-            None => {
-                let (version, version_file_path) = self.version_file.get_version()?;
-                println!(
-                    "Detected {} from {:?}",
-                    version.to_string().cyan(),
-                    version_file_path
-                );
-                version
-            }
-        };
+        let request_version = self
+            .version
+            .unwrap_or(self.get_version_from_version_file()?);
 
         let release = release::fetch_latest(request_version)?;
         let install_version = release.version.unwrap();
@@ -109,6 +100,16 @@ impl Command for Install {
 }
 
 impl Install {
+    fn get_version_from_version_file(&self) -> Result<Version, Error> {
+        let (version, version_file_path) = self.version_file.get_version()?;
+        println!(
+            "Detected {} from {:?}",
+            version.to_string().cyan(),
+            version_file_path
+        );
+        Ok(version)
+    }
+
     // TODO: checksum
     fn download_and_unpack(url: &str, path: impl AsRef<Path>) {
         let response = curl::get_as_reader(url);
