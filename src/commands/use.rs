@@ -6,7 +6,6 @@ use crate::version_file::{self, VersionFile};
 use clap;
 use colored::Colorize;
 use derive_more::Display;
-use std::fs;
 use std::str::FromStr;
 use thiserror::Error;
 
