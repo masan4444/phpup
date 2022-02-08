@@ -29,7 +29,7 @@ pub enum Error {
 impl Command for Init {
     type Error = Error;
     fn run(&self, _config: &Config) -> Result<(), Error> {
-        let shell = self.shell.unwrap_or(Shell::detect_shell()?);
+        let shell = self.shell.map_or_else(|| Shell::detect_shell(), Ok)?;
         let symlink = create_symlink();
         let mut eval_stmts = vec![
             shell.set_env("PHPUP_MULTISHELL_PATH", symlink.to_str().unwrap()),
