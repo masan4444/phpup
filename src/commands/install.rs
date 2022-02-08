@@ -2,6 +2,7 @@ use super::{Command, Config};
 use crate::curl;
 use crate::release;
 use crate::version::Version;
+use crate::version_file::{self, VersionFile};
 use clap;
 use colored::Colorize;
 use flate2::read::GzDecoder;
@@ -14,89 +15,97 @@ use thiserror::Error;
 #[derive(clap::Parser, Debug)]
 pub struct Install {
     version: Option<Version>,
+
+    #[clap(flatten)]
+    version_file: VersionFile,
 }
 
 #[derive(Error, Debug)]
 pub enum Error {
     #[error(transparent)]
     CantFetchReleaseError(#[from] release::Error),
+
+    #[error("Can't detect a version: {0}")]
+    NoVersionFromFileError(#[from] version_file::Error),
 }
 
 impl Command for Install {
     type Error = Error;
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let versions_dir = config.versions_dir();
-        let local_versions = config.local_versions();
+        let request_version = self
+            .version
+            .map_or_else(|| self.get_version_from_version_file(), Ok)?;
 
-        match &self.version {
-            Some(version) => {
-                let installed_version = local_versions
-                    .iter()
-                    .filter(|local_version| version.includes(local_version))
-                    .max();
-                if let Some(installed_version) = installed_version {
-                    println!(
-                        "{}: Already installed {}",
-                        "warning".yellow().bold(),
-                        installed_version
-                    );
-                    return Ok(());
-                }
+        let release = release::fetch_latest(request_version)?;
+        let install_version = release.version.unwrap();
+        let url = release.source_url();
 
-                let release = release::fetch_latest(*version)?;
-                let install_version = release.version.unwrap();
-                let url = release.source_url();
+        if config.latest_local_version_included_in(&request_version) == Some(install_version) {
+            println!(
+                "{}: Already installed PHP {}",
+                "warning".yellow().bold(),
+                install_version.to_string().cyan()
+            );
+            return Ok(());
+        }
 
-                // .phpup/versions/php/3.1.4/.downloads-aaa/php-3.1.4
-                //                    |     |              |        |
-                //         versions_dir     |              |        |
-                //                install_dir              |        |
-                //                              download_dir        |
-                //                                         source_dir
-                //
-                // .phpup/versions/php/3.1.4/{bin,include,lib,php,var}
+        // .phpup/versions/php/3.1.4/.downloads-aaa/php-3.1.4
+        //                    |     |              |        |
+        //         versions_dir     |              |        |
+        //                install_dir              |        |
+        //                              download_dir        |
+        //                                         source_dir
+        //
+        // .phpup/versions/php/3.1.4/{bin,include,lib,php,var}
 
-                let install_dir = versions_dir.join(install_version.to_string());
-                fs::create_dir_all(&install_dir).unwrap();
-                println!(
-                    "{} {}",
-                    "Installing".green().bold(),
-                    install_version.to_string().cyan()
-                );
+        let install_dir = config.versions_dir().join(install_version.to_string());
+        fs::create_dir_all(&install_dir).unwrap();
+        println!(
+            "{} {}",
+            "Installing".green().bold(),
+            install_version.to_string().cyan()
+        );
 
-                let download_dir = tempfile::Builder::new()
-                    .prefix(".download-")
-                    .tempdir_in(&install_dir)
-                    .expect("Can't create a temporary directory to download to");
-                println!("{} {}", "Downloading".green().bold(), url);
-                println!("  to {} ...", download_dir.path().to_string_lossy());
-                Self::download_and_unpack(&url, &download_dir);
+        let download_dir = tempfile::Builder::new()
+            .prefix(".download-")
+            .tempdir_in(&install_dir)
+            .expect("Can't create a temporary directory to download to");
+        println!("{} {}", "Downloading".green().bold(), url);
+        println!("  to {} ...", download_dir.path().to_string_lossy());
+        Self::download_and_unpack(&url, &download_dir);
 
-                let source_dir = fs::read_dir(&download_dir.path())
-                    .unwrap()
-                    .next()
-                    .unwrap()
-                    .unwrap()
-                    .path();
-                println!(
-                    "{} {} ...",
-                    "Buiding from".green().bold(),
-                    source_dir.to_string_lossy()
-                );
-                Self::build(&source_dir, &install_dir).unwrap();
-                println!(
-                    "{} {}",
-                    "Installed to".green().bold(),
-                    install_dir.to_string_lossy()
-                );
-            }
-            None => {}
-        };
+        let source_dir = fs::read_dir(&download_dir.path())
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap()
+            .path();
+        println!(
+            "{} {} ...",
+            "Buiding from".green().bold(),
+            source_dir.to_string_lossy()
+        );
+        Self::build(&source_dir, &install_dir).unwrap();
+        println!(
+            "{} {}",
+            "Installed to".green().bold(),
+            install_dir.to_string_lossy()
+        );
         Ok(())
     }
 }
 
 impl Install {
+    fn get_version_from_version_file(&self) -> Result<Version, Error> {
+        let (version, version_file_path) = self.version_file.get_version()?;
+        println!(
+            "Detected {} from {:?}",
+            version.to_string().cyan(),
+            version_file_path
+        );
+        Ok(version)
+    }
+
     // TODO: checksum
     fn download_and_unpack(url: &str, path: impl AsRef<Path>) {
         let response = curl::get_as_reader(url);

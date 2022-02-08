@@ -95,6 +95,17 @@ impl Config {
             .sorted()
             .collect()
     }
+    pub fn local_versions_included_in<'a>(
+        &self,
+        version: &'a Version,
+    ) -> impl Iterator<Item = Version> + 'a {
+        self.local_versions()
+            .into_iter()
+            .filter(|local_version| version.includes(local_version))
+    }
+    pub fn latest_local_version_included_in(&self, version: &Version) -> Option<Version> {
+        self.local_versions_included_in(version).max()
+    }
     pub fn aliases(&self) -> HashMap<Version, Vec<crate::alias::Alias>> {
         use crate::alias::Alias;
         let aliases_dir = self.aliases_dir();

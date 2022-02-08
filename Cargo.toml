@@ -24,6 +24,7 @@ dirs = "1.0.4"
 tempfile = "3.2.0"
 num_cpus = "1.13.1"
 colored = "1.6.1"
+indoc = "1.0.3"
 
 octocrab = "0.15.3"
 # async-trait = "0.1.52"

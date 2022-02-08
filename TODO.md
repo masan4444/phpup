@@ -5,7 +5,7 @@
 - [x] alias
 - [ ] defaut alias
 - [ ] automatically `use` when `install` first time
-- [ ] auto version switching via `.php-version`
+- [x] auto version switching via `.php-version`
 - [ ] colorize output
 - [ ] embed system php version
 - [x] shell completion

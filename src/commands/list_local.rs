@@ -21,10 +21,9 @@ impl Command for ListLocal {
         let printer = Printer::new(&local_versions, config.current_version(), &aliases);
 
         match &self.version {
-            Some(version) => local_versions
-                .iter()
-                .filter(|local_version| version.includes(local_version))
-                .for_each(|&local_version| printer.print_version(local_version)),
+            Some(version) => config
+                .local_versions_included_in(version)
+                .for_each(|local_version| printer.print_version(local_version)),
             None => local_versions
                 .iter()
                 .for_each(|&local_version| printer.print_version(local_version)),

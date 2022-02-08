@@ -19,12 +19,8 @@ pub enum Error {
 impl Command for Alias {
     type Error = Error;
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let local_versions = config.local_versions();
-        // TODO: funcionarize
-        let version = local_versions
-            .iter()
-            .filter(|local_version| self.version.includes(local_version))
-            .max()
+        let version = config
+            .latest_local_version_included_in(&self.version)
             .ok_or(Error::NotInstalledError(self.version))?;
 
         let alias_symlink = self.alias.symlink_path(&config.aliases_dir());

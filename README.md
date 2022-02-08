@@ -1,4 +1,4 @@
-# [WIP] PHP-UP: Fast and Simple PHP version manager
+# PHP-UP: Fast and Simple PHP version manager
 
 :zap: Fast and simple PHP version manager, written in rust
 
@@ -6,7 +6,7 @@
 
 - No requirements for system PHP installation
 - Cross-platform support (macOS, Linux)
-- [WIP] Automatically version switching with `.php-version`
+- Automatically version switching with `.php-version`
 
 ## :wrench: Installation
 

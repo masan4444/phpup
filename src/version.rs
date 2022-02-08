@@ -127,13 +127,14 @@ impl Version {
 }
 
 #[derive(Error, Debug)]
-pub enum Error {
+pub enum ParseError {
     #[error("Invalid version format: \"{0}\"")]
     InvalidVersionFormat(String),
 }
 
 impl FromStr for Version {
-    type Err = Error;
+    type Err = ParseError;
+
     fn from_str(s: &str) -> core::result::Result<Self, Self::Err> {
         if s == "3.0.x (latest)" {
             return Ok(Version::from_numbers(
@@ -144,7 +145,7 @@ impl FromStr for Version {
         }
         let cap = VERSION_REGEX
             .captures(s)
-            .ok_or(Error::InvalidVersionFormat(s.to_owned()))?;
+            .ok_or(ParseError::InvalidVersionFormat(s.to_owned()))?;
         let to_num = |m: regex::Match| m.as_str().parse().unwrap();
         let major = Major {
             version: to_num(cap.get(1).unwrap()),
