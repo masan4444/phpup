@@ -32,25 +32,21 @@ pub enum Error {
 impl Command for Install {
     type Error = Error;
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let versions_dir = config.versions_dir();
-
         let request_version = self
             .version
-            .unwrap_or(self.get_version_from_version_file()?);
+            .map_or_else(|| self.get_version_from_version_file(), Ok)?;
 
         let release = release::fetch_latest(request_version)?;
         let install_version = release.version.unwrap();
         let url = release.source_url();
 
-        if let Some(installed_version) = config.latest_local_version_included_in(&request_version) {
-            if installed_version == install_version {
-                println!(
-                    "{}: Already installed PHP {}",
-                    "warning".yellow().bold(),
-                    installed_version.to_string().cyan()
-                );
-                return Ok(());
-            }
+        if config.latest_local_version_included_in(&request_version) == Some(install_version) {
+            println!(
+                "{}: Already installed PHP {}",
+                "warning".yellow().bold(),
+                install_version.to_string().cyan()
+            );
+            return Ok(());
         }
 
         // .phpup/versions/php/3.1.4/.downloads-aaa/php-3.1.4
@@ -62,7 +58,7 @@ impl Command for Install {
         //
         // .phpup/versions/php/3.1.4/{bin,include,lib,php,var}
 
-        let install_dir = versions_dir.join(install_version.to_string());
+        let install_dir = config.versions_dir().join(install_version.to_string());
         fs::create_dir_all(&install_dir).unwrap();
         println!(
             "{} {}",
