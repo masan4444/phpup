@@ -76,7 +76,7 @@ impl Config {
                     .ok()
             })
     }
-    pub fn local_versions(&self) -> Vec<Version> {
+    pub fn local_versions(&self) -> impl Iterator<Item = Version> {
         let versions_dir = self.versions_dir();
         fs::read_dir(&versions_dir)
             .unwrap()
@@ -93,14 +93,12 @@ impl Config {
                     .is_file()
             })
             .sorted()
-            .collect()
     }
     pub fn local_versions_included_in<'a>(
         &self,
         version: &'a Version,
     ) -> impl Iterator<Item = Version> + 'a {
         self.local_versions()
-            .into_iter()
             .filter(|local_version| version.includes(local_version))
     }
     pub fn latest_local_version_included_in(&self, version: &Version) -> Option<Version> {

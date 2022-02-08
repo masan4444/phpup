@@ -4,6 +4,7 @@ use crate::release;
 use crate::version::Version;
 use clap;
 use colored::Colorize;
+use itertools::Itertools;
 use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
@@ -59,7 +60,7 @@ impl Command for ListRemote {
             }
         };
 
-        let local_versions = config.local_versions();
+        let local_versions = config.local_versions().collect_vec();
         let aliases = config.aliases();
         let printer = Printer::new(&local_versions, config.current_version(), &aliases);
         featch_and_print_versions(&query_versions, self.only_latest_patch, &printer)?;
@@ -90,9 +91,8 @@ where
 {
     let mut latest_patch: Option<&'a Version> = None;
     let mut latest_patches = versions
-        .into_iter()
         .rev()
-        .map(|version| {
+        .filter_map(|version| {
             if latest_patch.is_none()
                 || latest_patch.unwrap().minor_version() != version.minor_version()
             {
@@ -101,7 +101,6 @@ where
                 None
             }
         })
-        .filter_map(|e| e)
         .collect::<Vec<_>>();
     latest_patches.push(latest_patch.unwrap());
     latest_patches.into_iter().rev()
