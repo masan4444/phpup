@@ -1,5 +1,7 @@
 use super::{Command, Config};
-use crate::{alias::Alias, version::Version};
+use crate::alias::Alias;
+use crate::decorized::{color::Color, Decorized};
+use crate::version::Version;
 use clap;
 use colored::Colorize;
 use itertools::Itertools;
@@ -73,7 +75,7 @@ impl<'a> Printer<'a> {
         );
 
         if used {
-            println!("{}", output.cyan())
+            println!("{}", output.color(<Version as Decorized>::Color::color()))
         } else {
             println!("{}", output)
         }

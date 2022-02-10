@@ -1,5 +1,4 @@
-use super::Config;
-use super::{list_local::Printer, Command};
+use super::{list_local::Printer, Command, Config};
 use crate::release;
 use crate::version::Version;
 use clap;
@@ -38,7 +37,7 @@ impl Command for ListRemote {
             Some(version) => {
                 if self.only_latest_patch && version.patch_version().is_some() {
                     println!(
-                        "{}: `--latest-patch` is available only if patch number is NOT specified: {}",
+                        "{}: '--latest-patch' is available only if patch number is NOT specified: {}",
                         "warning".yellow().bold(),
                         version
                     );

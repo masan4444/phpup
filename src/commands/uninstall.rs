@@ -1,7 +1,8 @@
 use super::{Command, Config, ConfigError};
-use crate::{symlink, version::Version};
+use crate::decorized::Decorized;
+use crate::symlink;
+use crate::version::Version;
 use clap;
-use colored::Colorize;
 use std::fs;
 use thiserror::Error;
 
@@ -12,7 +13,7 @@ pub struct Uninstall {
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Can't find installed version `{0}`")]
+    #[error("Can't find installed version '{0}'")]
     NotInstalledError(Version),
     #[error(transparent)]
     NoMultiShellPathError(#[from] ConfigError),
@@ -33,9 +34,9 @@ impl Command for Uninstall {
         let version_dir = config.versions_dir().join(uninstall_version.to_string());
         fs::remove_dir_all(&version_dir).expect("Can't remove installed directory");
         println!(
-            "PHP {} was removed successfully from {:?}",
-            uninstall_version.to_string().cyan(),
-            version_dir
+            "{} was removed successfully from {}",
+            uninstall_version.decorized_with_prefix(),
+            version_dir.display().decorized()
         );
 
         if let Some(aliases) = config.aliases().get(&uninstall_version) {
@@ -43,10 +44,7 @@ impl Command for Uninstall {
             for alias in aliases {
                 let alias_symlink = alias.symlink_path(&aliases_dir);
                 fs::remove_file(&alias_symlink).expect("Can't remove alias symbolic link");
-                println!(
-                    "Alias {} was removed successfully",
-                    alias.to_string().cyan()
-                );
+                println!("Alias {} was removed successfully", alias.decorized());
             }
         }
         Ok(())
