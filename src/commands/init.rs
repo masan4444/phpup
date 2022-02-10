@@ -29,7 +29,7 @@ pub enum Error {
 impl Command for Init {
     type Error = Error;
     fn run(&self, _config: &Config) -> Result<(), Error> {
-        let shell = self.shell.map_or_else(|| Shell::detect_shell(), Ok)?;
+        let shell = self.shell.map_or_else(Shell::detect_shell, Ok)?;
         let symlink = create_symlink();
         let mut eval_stmts = vec![
             shell.set_env("PHPUP_MULTISHELL_PATH", symlink.to_str().unwrap()),
@@ -49,16 +49,16 @@ impl Command for Init {
 fn create_symlink() -> std::path::PathBuf {
     let temp_dir = std::env::temp_dir().join("phpup");
     std::fs::create_dir_all(&temp_dir).expect("Can't create tempdir!");
-    let symlink_path = loop {
+    
+
+    // TODO: default version
+    // symlink::link(&default_version_dir, &symlink_path).expect("Can't create symlink!");
+    loop {
         let symlink_path = temp_dir.join(generate_symlink_path());
         if !symlink_path.exists() {
             break symlink_path;
         }
-    };
-
-    // TODO: default version
-    // symlink::link(&default_version_dir, &symlink_path).expect("Can't create symlink!");
-    symlink_path
+    }
 }
 
 fn generate_symlink_path() -> PathBuf {

@@ -122,6 +122,6 @@ impl FromStr for VersionName {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(s.parse::<Version>()
-            .map_or(Self::Alias(s.parse().unwrap()), |v| Self::Version(v)))
+            .map_or(Self::Alias(s.parse().unwrap()), Self::Version))
     }
 }

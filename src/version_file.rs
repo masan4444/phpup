@@ -74,13 +74,10 @@ impl VersionFile {
             .map(|string| {
                 string
                     .trim()
-                    .parse::<Version>()
-                    .or_else(|source| {
-                        Err(Error::VersionParseError {
+                    .parse::<Version>().map_err(|source| Error::VersionParseError {
                             filepath: filepath.clone(),
                             source,
                         })
-                    })
                     .map(|version| VersionFileInfo { version, filepath })
             })
             .transpose()

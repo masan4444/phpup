@@ -23,7 +23,7 @@ impl Command for Unalias {
         if alias_symlink.exists() {
             fs::remove_file(&alias_symlink).expect("Can't remove alias symbolic link");
         } else {
-            return Err(Error::NotFoundAliasError(self.alias.to_string()))?;
+            return Err(Error::NotFoundAliasError(self.alias.to_string()));
         }
         println!("Remove the alias {}", self.alias.decorized());
         Ok(())

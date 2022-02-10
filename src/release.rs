@@ -178,11 +178,11 @@ impl Release {
         let today = Utc::now().naive_local().date();
 
         if today < active_support_deadline {
-            return Support::ActiveSupport;
+            Support::ActiveSupport
         } else if today < security_support_deadline {
-            return Support::SecurityFixesOnly;
+            Support::SecurityFixesOnly
         } else {
-            return Support::EndOfLife;
+            Support::EndOfLife
         }
     }
 }
@@ -265,7 +265,7 @@ mod tests {
                 }
             }
         "#;
-        let resp: Result<Response, _> = serde_json::from_str(&json);
+        let resp: Result<Response, _> = serde_json::from_str(json);
         assert!(resp.is_ok());
         let resp = resp.unwrap();
         assert!(if let Response::Map(map) = resp {

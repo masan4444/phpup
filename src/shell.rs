@@ -182,8 +182,7 @@ fn get_process_info(pid: u32) -> Result<ProcessInfo, ProcessInfoError> {
 
     Ok(ProcessInfo {
         parent_pid: ppid
-            .parse()
-            .or_else(|_| Err(ParseError(line.to_string())))?,
+            .parse().map_err(|_| ParseError(line.to_string()))?,
         command: command.into(),
     })
 }

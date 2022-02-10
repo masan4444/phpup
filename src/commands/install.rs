@@ -127,7 +127,7 @@ impl Install {
         if !configure.status.success() {
             println!(
                 "configure failed: {}",
-                String::from_utf8_lossy(&configure.stderr).to_string()
+                String::from_utf8_lossy(&configure.stderr)
             );
             return Err(());
         };
@@ -142,7 +142,7 @@ impl Install {
         if !make.status.success() {
             println!(
                 "make failed: {}",
-                String::from_utf8_lossy(&make.stderr).to_string()
+                String::from_utf8_lossy(&make.stderr)
             );
             return Err(());
         };
@@ -156,7 +156,7 @@ impl Install {
         if !make_install.status.success() {
             println!(
                 "make install: {}",
-                String::from_utf8_lossy(&make_install.stderr).to_string()
+                String::from_utf8_lossy(&make_install.stderr)
             );
             return Err(());
         };
