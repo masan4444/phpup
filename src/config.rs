@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
-#[derive(clap::Parser, Debug)]
+#[derive(clap::Parser, Debug, Default)]
 pub struct Config {
     /// Specify a custom PHP-UP directory
     #[clap(long = "phpup-dir", env = "PHPUP_DIR")]
@@ -23,18 +23,10 @@ pub enum Error {
     NoMultiShellPathError,
 }
 
-impl std::default::Default for Config {
-    fn default() -> Self {
-        Self {
-            base_dir: None,
-            multishell_path: None,
-        }
-    }
-}
-
 impl Config {
     pub fn multishell_path(&self) -> Result<&Path, Error> {
-        self.multishell_path.as_deref()
+        self.multishell_path
+            .as_deref()
             .ok_or(Error::NoMultiShellPathError)
     }
     pub fn base_dir(&self) -> PathBuf {
@@ -48,8 +40,8 @@ impl Config {
     }
     pub fn versions_dir(&self) -> PathBuf {
         let versions_dir = self.base_dir().join("versions").join("php");
-        fs::create_dir_all(&versions_dir).unwrap_or_else(|_| panic!("Can't create version dirctory: {:?}",
-            versions_dir));
+        fs::create_dir_all(&versions_dir)
+            .unwrap_or_else(|_| panic!("Can't create version dirctory: {:?}", versions_dir));
         versions_dir
     }
     pub fn aliases_dir(&self) -> PathBuf {

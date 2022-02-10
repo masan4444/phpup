@@ -38,10 +38,10 @@ pub struct VersionFileInfo {
     pub filepath: PathBuf,
 }
 impl VersionFileInfo {
-    fn to_relative_path(self, base_dir: impl AsRef<Path>) -> Self {
+    fn to_relative_path(&self, base_dir: impl AsRef<Path>) -> Self {
         Self {
             version: self.version,
-            filepath: diff_paths(self.filepath, base_dir).unwrap(),
+            filepath: diff_paths(&self.filepath, base_dir).unwrap(),
         }
     }
 }
@@ -59,7 +59,7 @@ impl VersionFile {
             self.search_recursively(&current_dir)
         } else {
             self.search_current(&current_dir)?
-                .ok_or(Error::NoVersionFileError(self.filename.clone()))
+                .ok_or_else(|| Error::NoVersionFileError(self.filename.clone()))
         })
         .map(|info| info.to_relative_path(&current_dir))
     }
@@ -74,10 +74,11 @@ impl VersionFile {
             .map(|string| {
                 string
                     .trim()
-                    .parse::<Version>().map_err(|source| Error::VersionParseError {
-                            filepath: filepath.clone(),
-                            source,
-                        })
+                    .parse::<Version>()
+                    .map_err(|source| Error::VersionParseError {
+                        filepath: filepath.clone(),
+                        source,
+                    })
                     .map(|version| VersionFileInfo { version, filepath })
             })
             .transpose()

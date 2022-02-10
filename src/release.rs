@@ -171,10 +171,10 @@ impl Release {
         let release_year = release_date.year();
         let active_support_deadline = release_date
             .with_year(release_year + 2)
-            .unwrap_or(NaiveDate::from_yo(release_year + 1, 1).succ());
+            .unwrap_or_else(|| NaiveDate::from_yo(release_year + 1, 1).succ());
         let security_support_deadline = release_date
             .with_year(release_year + 3)
-            .unwrap_or(NaiveDate::from_yo(release_year + 2, 1).succ());
+            .unwrap_or_else(|| NaiveDate::from_yo(release_year + 2, 1).succ());
         let today = Utc::now().naive_local().date();
 
         if today < active_support_deadline {

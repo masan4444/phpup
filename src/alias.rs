@@ -23,12 +23,12 @@ impl Alias {
         let alias_symlink = self.symlink_path(aliases_dir);
         let version_dir = alias_symlink
             .read_link()
-            .or(Err(Error::NotFoundAliasError(self.0.clone())))?;
+            .map_err(|_| Error::NotFoundAliasError(self.0.clone()))?;
         let version = version_dir
             .file_name()
             .and_then(|os_str| os_str.to_str())
             .and_then(|s| s.parse::<Version>().ok())
-            .ok_or(Error::NotFoundVersionError(self.0.clone()))?;
+            .ok_or_else(|| Error::NotFoundVersionError(self.0.clone()))?;
         Ok((version_dir, version))
     }
 }

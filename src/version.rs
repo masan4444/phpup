@@ -145,7 +145,7 @@ impl FromStr for Version {
         }
         let cap = VERSION_REGEX
             .captures(s)
-            .ok_or(ParseError::InvalidVersionFormat(s.to_owned()))?;
+            .ok_or_else(|| ParseError::InvalidVersionFormat(s.to_owned()))?;
         let to_num = |m: regex::Match| m.as_str().parse().unwrap();
         let major = Major {
             version: to_num(cap.get(1).unwrap()),
@@ -257,14 +257,14 @@ mod tests {
         let version3_1 = Version::from_numbers(3, Some(1), None);
         let version3 = Version::from_numbers(3, None, None);
 
-        assert_eq!(version3.includes(&version3), true);
-        assert_eq!(version3.includes(&version3_1), true);
-        assert_eq!(version3.includes(&version3_1_4), true);
-        assert_eq!(version3_1.includes(&version3), false);
-        assert_eq!(version3_1.includes(&version3_1), true);
-        assert_eq!(version3_1.includes(&version3_1_4), true);
-        assert_eq!(version3_1_4.includes(&version3), false);
-        assert_eq!(version3_1_4.includes(&version3_1), false);
-        assert_eq!(version3_1_4.includes(&version3_1_4), true);
+        assert!(version3.includes(&version3));
+        assert!(version3.includes(&version3_1));
+        assert!(version3.includes(&version3_1_4));
+        assert!(!version3_1.includes(&version3));
+        assert!(version3_1.includes(&version3_1));
+        assert!(version3_1.includes(&version3_1_4));
+        assert!(!version3_1_4.includes(&version3));
+        assert!(!version3_1_4.includes(&version3_1));
+        assert!(version3_1_4.includes(&version3_1_4));
     }
 }
