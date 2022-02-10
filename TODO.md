@@ -6,7 +6,7 @@
 - [ ] defaut alias
 - [ ] automatically `use` when `install` first time
 - [x] auto version switching via `.php-version`
-- [ ] colorize output
+- [x] colorize output
 - [ ] embed system php version
 - [x] shell completion
 - [ ] pre-release install (`8.1.0alpha2` etc..)

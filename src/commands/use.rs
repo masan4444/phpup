@@ -1,5 +1,6 @@
 use super::{Command, Config, ConfigError};
 use crate::alias::{self, Alias};
+use crate::decorized::Decorized;
 use crate::symlink;
 use crate::version::Version;
 use crate::version_file::{self, VersionFile};
@@ -30,7 +31,7 @@ enum VersionName {
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Can't find installed version `{0}`")]
+    #[error("Can't find installed version '{0}'")]
     NotInstalledError(Version),
 
     #[error(transparent)]
@@ -63,9 +64,9 @@ impl Command for Use {
                     let (_, version) = alias.resolve(config.aliases_dir())?;
                     outln!(
                         !self.quiet,
-                        "Resolve alias: {} -> {}",
-                        alias,
-                        version.to_string().cyan()
+                        "Resolve alias {} -> {}",
+                        alias.decorized(),
+                        version.decorized_with_prefix()
                     );
                     version
                 }
@@ -77,9 +78,9 @@ impl Command for Use {
                 }?;
                 outln!(
                     !self.quiet,
-                    "Detected {} from {:?}",
-                    version.to_string().cyan(),
-                    version_file_path
+                    "{} has been specified from {}",
+                    version.decorized(),
+                    version_file_path.display().decorized()
                 );
                 config
                     .latest_local_version_included_in(&version)
@@ -96,8 +97,8 @@ impl Command for Use {
 
         outln!(
             !self.quiet,
-            "Using PHP {}",
-            request_version.to_string().cyan()
+            "Using {}",
+            request_version.decorized_with_prefix()
         );
         if !is_used_yet {
             outln!(

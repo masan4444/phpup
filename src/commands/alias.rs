@@ -1,5 +1,7 @@
 use super::{Command, Config};
-use crate::{alias::Alias as AliasName, symlink, version::Version};
+use crate::decorized::Decorized;
+use crate::symlink;
+use crate::version::Version;
 use clap;
 use std::fs;
 use thiserror::Error;
@@ -7,12 +9,12 @@ use thiserror::Error;
 #[derive(clap::Parser, Debug)]
 pub struct Alias {
     version: Version,
-    alias: AliasName,
+    alias: crate::alias::Alias,
 }
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Can't find installed version `{0}`")]
+    #[error("Can't find installed version '{0}'")]
     NotInstalledError(Version),
 }
 
@@ -30,7 +32,11 @@ impl Command for Alias {
         let version_dir = config.versions_dir().join(version.to_string());
         symlink::link(version_dir, alias_symlink).expect("Can't create symlink!");
 
-        println!("Set `{}` as the alias to {}", self.alias, version);
+        println!(
+            "Set alias {} -> {}",
+            self.alias.decorized(),
+            version.decorized_with_prefix()
+        );
         Ok(())
     }
 }

@@ -170,14 +170,14 @@ impl fmt::Display for Version {
             "{}{}{}{}",
             self.major_version(),
             self.minor_version()
-                .map_or("".to_owned(), |v| format!(".{}", v)),
+                .map(|v| format!(".{}", v))
+                .unwrap_or_default(),
             self.patch_version()
-                .map_or("".to_owned(), |v| format!(".{}", v)),
-            self.pre_type().map_or("".to_owned(), |t| format!(
-                "{}{}",
-                t,
-                self.pre_version().unwrap()
-            )),
+                .map(|v| format!(".{}", v))
+                .unwrap_or_default(),
+            self.pre_type()
+                .map(|t| format!("{}{}", t, self.pre_version().unwrap()))
+                .unwrap_or_default(),
         )
         .fmt(f)
     }

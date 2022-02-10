@@ -22,8 +22,10 @@ fn fetch_and_parse(
     let base_url = "https://www.php.net/releases/index.php";
     let query = format!(
         "?json=1{}{}",
-        version.map_or("".to_owned(), |version| format!("&version={}", version)),
-        max.map_or("".to_owned(), |max| format!("&max={}", max)),
+        version
+            .map(|version| format!("&version={}", version))
+            .unwrap_or_default(),
+        max.map(|max| format!("&max={}", max)).unwrap_or_default(),
     );
     let url = &format!("{}{}", base_url, query);
     let json = curl::get_as_slice(url);

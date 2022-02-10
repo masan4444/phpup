@@ -1,5 +1,6 @@
 use super::{Command, Config};
 use crate::curl;
+use crate::decorized::Decorized;
 use crate::release;
 use crate::version::Version;
 use crate::version_file::{self, VersionFile};
@@ -42,9 +43,9 @@ impl Command for Install {
 
         if config.latest_local_version_included_in(&request_version) == Some(install_version) {
             println!(
-                "{}: Already installed PHP {}",
+                "{}: Already installed {}",
                 "warning".yellow().bold(),
-                install_version.to_string().cyan()
+                install_version.decorized_with_prefix()
             );
             return Ok(());
         }
@@ -63,7 +64,7 @@ impl Command for Install {
         println!(
             "{} {}",
             "Installing".green().bold(),
-            install_version.to_string().cyan()
+            install_version.decorized_with_prefix()
         );
 
         let download_dir = tempfile::Builder::new()
@@ -71,7 +72,6 @@ impl Command for Install {
             .tempdir_in(&install_dir)
             .expect("Can't create a temporary directory to download to");
         println!("{} {}", "Downloading".green().bold(), url);
-        println!("  to {} ...", download_dir.path().to_string_lossy());
         Self::download_and_unpack(&url, &download_dir);
 
         let source_dir = fs::read_dir(&download_dir.path())
@@ -81,15 +81,15 @@ impl Command for Install {
             .unwrap()
             .path();
         println!(
-            "{} {} ...",
-            "Buiding from".green().bold(),
-            source_dir.to_string_lossy()
+            "{} {}",
+            "Building from".green().bold(),
+            source_dir.display().decorized()
         );
         Self::build(&source_dir, &install_dir).unwrap();
         println!(
             "{} {}",
             "Installed to".green().bold(),
-            install_dir.to_string_lossy()
+            install_dir.display().decorized()
         );
         Ok(())
     }
@@ -99,9 +99,9 @@ impl Install {
     fn get_version_from_version_file(&self) -> Result<Version, Error> {
         let (version, version_file_path) = self.version_file.get_version()?;
         println!(
-            "Detected {} from {:?}",
-            version.to_string().cyan(),
-            version_file_path
+            "{} has been specified from {}",
+            version.decorized(),
+            version_file_path.display().decorized()
         );
         Ok(version)
     }

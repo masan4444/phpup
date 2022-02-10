@@ -1,7 +1,10 @@
 use super::{Command, Config};
-use crate::{alias::Alias, version::Version};
+use crate::alias::Alias;
+use crate::decorized::{color::Color, Decorized};
+use crate::version::Version;
 use clap;
 use colored::Colorize;
+use itertools::Itertools;
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -16,17 +19,17 @@ pub enum Error {}
 impl Command for ListLocal {
     type Error = Error;
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let local_versions = config.local_versions();
+        let local_versions = config.local_versions().collect_vec();
         let aliases = config.aliases();
         let printer = Printer::new(&local_versions, config.current_version(), &aliases);
 
         match &self.version {
-            Some(version) => config
-                .local_versions_included_in(version)
-                .for_each(|local_version| printer.print_version(local_version)),
-            None => local_versions
-                .iter()
-                .for_each(|&local_version| printer.print_version(local_version)),
+            Some(version) => printer.print_versions(
+                local_versions
+                    .iter()
+                    .filter(|local_version| version.includes(local_version)),
+            ),
+            None => printer.print_versions(local_versions.iter()),
         };
 
         Ok(())
@@ -72,7 +75,7 @@ impl<'a> Printer<'a> {
         );
 
         if used {
-            println!("{}", output.cyan())
+            println!("{}", output.color(<Version as Decorized>::Color::color()))
         } else {
             println!("{}", output)
         }

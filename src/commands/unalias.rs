@@ -1,5 +1,6 @@
 use super::{Command, Config};
 use crate::alias::Alias;
+use crate::decorized::Decorized;
 use clap;
 use std::fs;
 use thiserror::Error;
@@ -11,7 +12,7 @@ pub struct Unalias {
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Can't find alias `{0}`")]
+    #[error("Can't find alias '{0}'")]
     NotFoundAliasError(String),
 }
 
@@ -24,7 +25,7 @@ impl Command for Unalias {
         } else {
             return Err(Error::NotFoundAliasError(self.alias.to_string()))?;
         }
-        println!("Remove the alias `{}`", self.alias);
+        println!("Remove the alias {}", self.alias.decorized());
         Ok(())
     }
 }
