@@ -14,7 +14,7 @@
 
 ## Config
 
-- [ ] `.phpup` dirctory path (default: `$HOME/.phpup`)
+- [x] `.phpup` dirctory path (default: `$HOME/.phpup`)
 - [ ] source mirror url (default: `https://www.php.net/distributions` and `https://museum.php.net`)
 - [ ] `build`: configure option
 
