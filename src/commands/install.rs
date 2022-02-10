@@ -24,10 +24,10 @@ pub struct Install {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error(transparent)]
-    CantFetchReleaseError(#[from] release::Error),
+    FailedFetchRelease(#[from] release::FetchError),
 
     #[error("Can't detect a version: {0}")]
-    NoVersionFromFileError(#[from] version_file::Error),
+    NoVersionFromFile(#[from] version_file::Error),
 }
 
 impl Command for Install {
@@ -140,10 +140,7 @@ impl Install {
             .output()
             .unwrap();
         if !make.status.success() {
-            println!(
-                "make failed: {}",
-                String::from_utf8_lossy(&make.stderr)
-            );
+            println!("make failed: {}", String::from_utf8_lossy(&make.stderr));
             return Err(());
         };
 

@@ -13,7 +13,7 @@ pub struct Unalias {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Can't find alias '{0}'")]
-    NotFoundAliasError(String),
+    NotFoundAlias(String),
 }
 
 impl Command for Unalias {
@@ -23,7 +23,7 @@ impl Command for Unalias {
         if alias_symlink.exists() {
             fs::remove_file(&alias_symlink).expect("Can't remove alias symbolic link");
         } else {
-            return Err(Error::NotFoundAliasError(self.alias.to_string()));
+            return Err(Error::NotFoundAlias(self.alias.to_string()));
         }
         println!("Remove the alias {}", self.alias.decorized());
         Ok(())

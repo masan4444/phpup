@@ -24,13 +24,13 @@ pub struct VersionFile {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Can't parse string written in {filepath}: {source}")]
-    VersionParseError {
+    FailedParseVersion {
         filepath: PathBuf,
         #[source]
         source: ParseError,
     },
     #[error("Can't find a version file: \"{0}\"")]
-    NoVersionFileError(PathBuf),
+    NoVersionFile(PathBuf),
 }
 
 pub struct VersionFileInfo {
@@ -59,7 +59,7 @@ impl VersionFile {
             self.search_recursively(&current_dir)
         } else {
             self.search_current(&current_dir)?
-                .ok_or_else(|| Error::NoVersionFileError(self.filename.clone()))
+                .ok_or_else(|| Error::NoVersionFile(self.filename.clone()))
         })
         .map(|info| info.to_relative_path(&current_dir))
     }
@@ -75,7 +75,7 @@ impl VersionFile {
                 string
                     .trim()
                     .parse::<Version>()
-                    .map_err(|source| Error::VersionParseError {
+                    .map_err(|source| Error::FailedParseVersion {
                         filepath: filepath.clone(),
                         source,
                     })
@@ -92,7 +92,7 @@ impl VersionFile {
             }
             searching_dir = dir.parent()
         }
-        Err(Error::NoVersionFileError(self.filename.clone()))
+        Err(Error::NoVersionFile(self.filename.clone()))
     }
 }
 

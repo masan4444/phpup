@@ -8,17 +8,17 @@ use std::collections::BTreeMap;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum Error {
+pub enum FetchError {
     #[error("Can't find releases that matches {0}")]
-    NotFoundReleaseError(Version),
+    NotFoundRelease(Version),
     #[error("Receive error message from release site: {0}")]
-    OtherFetchError(String),
+    Other(String),
 }
 
 fn fetch_and_parse(
     version: Option<Version>,
     max: Option<usize>,
-) -> Result<BTreeMap<Version, Release>, Error> {
+) -> Result<BTreeMap<Version, Release>, FetchError> {
     let base_url = "https://www.php.net/releases/index.php";
     let query = format!(
         "?json=1{}{}",
@@ -37,25 +37,25 @@ fn fetch_and_parse(
         Response::One(release) => Ok([(release.version.unwrap(), release)].into_iter().collect()),
         Response::Error { msg } => {
             if msg.starts_with("Unknown version") {
-                Err(Error::NotFoundReleaseError(version.unwrap()))
+                Err(FetchError::NotFoundRelease(version.unwrap()))
             } else {
-                Err(Error::OtherFetchError(msg.to_owned()))
+                Err(FetchError::Other(msg.to_owned()))
             }
         }
     }
 }
 
-pub fn fetch_all(version: Version) -> Result<BTreeMap<Version, Release>, Error> {
+pub fn fetch_all(version: Version) -> Result<BTreeMap<Version, Release>, FetchError> {
     fetch_and_parse(Some(version), Some(1000))
 }
 
-pub fn fetch_latest(version: Version) -> Result<Release, Error> {
+pub fn fetch_latest(version: Version) -> Result<Release, FetchError> {
     let mut latest = fetch_and_parse(Some(version), None)?;
     let version = *latest.keys().next().unwrap();
     Ok(latest.remove(&version).unwrap())
 }
 
-pub fn fetch_oldest_patch(version: Version) -> Result<Release, Error> {
+pub fn fetch_oldest_patch(version: Version) -> Result<Release, FetchError> {
     let oldest_minor_version =
         Version::from_numbers(version.major_version(), version.minor_version(), Some(0));
     fetch_latest(oldest_minor_version)

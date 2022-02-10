@@ -9,9 +9,9 @@ pub struct Alias(String);
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Can't resolve alias: {0}")]
-    NotFoundAliasError(String),
+    NotFoundAlias(String),
     #[error("Can't find version: '{0}'")]
-    NotFoundVersionError(String),
+    NotFoundVersion(String),
 }
 
 impl Alias {
@@ -23,12 +23,12 @@ impl Alias {
         let alias_symlink = self.symlink_path(aliases_dir);
         let version_dir = alias_symlink
             .read_link()
-            .map_err(|_| Error::NotFoundAliasError(self.0.clone()))?;
+            .map_err(|_| Error::NotFoundAlias(self.0.clone()))?;
         let version = version_dir
             .file_name()
             .and_then(|os_str| os_str.to_str())
             .and_then(|s| s.parse::<Version>().ok())
-            .ok_or_else(|| Error::NotFoundVersionError(self.0.clone()))?;
+            .ok_or_else(|| Error::NotFoundVersion(self.0.clone()))?;
         Ok((version_dir, version))
     }
 }

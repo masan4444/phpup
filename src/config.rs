@@ -20,14 +20,14 @@ pub struct Config {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Not yet initialized; Need to run `eval \"$(phpup init)\"`")]
-    NoMultiShellPathError,
+    NoMultiShellPath,
 }
 
 impl Config {
     pub fn multishell_path(&self) -> Result<&Path, Error> {
         self.multishell_path
             .as_deref()
-            .ok_or(Error::NoMultiShellPathError)
+            .ok_or(Error::NoMultiShellPath)
     }
     pub fn base_dir(&self) -> PathBuf {
         if let Some(base_dir) = self.base_dir.as_ref() {

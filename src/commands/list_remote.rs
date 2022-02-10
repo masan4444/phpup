@@ -27,7 +27,7 @@ pub struct ListRemote {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error(transparent)]
-    CantFetchReleaseError(#[from] release::Error),
+    FailedFetchRelease(#[from] release::FetchError),
 }
 
 impl Command for ListRemote {

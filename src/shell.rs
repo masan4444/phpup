@@ -17,11 +17,11 @@ pub const fn available_shells() -> &'static [&'static str] {
 #[derive(Debug, Error)]
 pub enum ShellDetectError {
     #[error("parent process tracing count reached the limit: {MAX_SEARCH_ITERATIONS}")]
-    TracingParentLimitError,
+    TooManyTracing,
     #[error("reached first process PID=0 when tracing processes")]
-    ReachedFirstProcessError,
+    ReachedFirstProcess,
     #[error(transparent)]
-    ProcessInfoError(#[from] ProcessInfoError),
+    FailedGetProcessInfo(#[from] ProcessInfoError),
 }
 
 const MAX_SEARCH_ITERATIONS: u8 = 10;
@@ -30,17 +30,15 @@ use Shell::*;
 
 impl Shell {
     pub fn detect_shell() -> Result<Self, ShellDetectError> {
-        use ShellDetectError::*;
-
         let mut pid = std::process::id();
         let mut visited = 0;
 
         loop {
             if visited > MAX_SEARCH_ITERATIONS {
-                return Err(TracingParentLimitError);
+                return Err(ShellDetectError::TooManyTracing);
             }
             if pid == 0 {
-                return Err(ReachedFirstProcessError);
+                return Err(ShellDetectError::ReachedFirstProcess);
             }
             let process_info = get_process_info(pid)?;
             let binary = process_info
@@ -148,17 +146,16 @@ struct ProcessInfo {
 #[derive(Debug, Error)]
 pub enum ProcessInfoError {
     #[error(transparent)]
-    IOError(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
     #[error("failed to exec 'ps' command")]
-    ExitFailedError,
+    ExitFailed,
     #[error("can't parse 'ps' command output: {0}")]
-    ParseError(String),
+    Parse(String),
 }
 #[cfg(unix)]
 fn get_process_info(pid: u32) -> Result<ProcessInfo, ProcessInfoError> {
     use std::io::{BufRead, BufReader};
     use std::process::Command;
-    use ProcessInfoError::*;
 
     let mut child = Command::new("ps")
         .arg("-o")
@@ -170,19 +167,24 @@ fn get_process_info(pid: u32) -> Result<ProcessInfo, ProcessInfoError> {
 
     match child.wait() {
         Ok(status) if status.success() => {}
-        _ => return Err(ExitFailedError),
+        _ => return Err(ProcessInfoError::ExitFailed),
     }
 
     let mut line = String::new();
     BufReader::new(child.stdout.unwrap()).read_line(&mut line)?;
 
     let mut parts = line.trim().split_whitespace();
-    let ppid = parts.next().ok_or_else(|| ParseError(line.to_string()))?;
-    let command = parts.next().ok_or_else(|| ParseError(line.to_string()))?;
+    let ppid = parts
+        .next()
+        .ok_or_else(|| ProcessInfoError::Parse(line.to_string()))?;
+    let command = parts
+        .next()
+        .ok_or_else(|| ProcessInfoError::Parse(line.to_string()))?;
 
     Ok(ProcessInfo {
         parent_pid: ppid
-            .parse().map_err(|_| ParseError(line.to_string()))?,
+            .parse()
+            .map_err(|_| ProcessInfoError::Parse(line.to_string()))?,
         command: command.into(),
     })
 }
