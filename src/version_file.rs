@@ -1,4 +1,5 @@
 use crate::version::{ParseError, Version};
+use pathdiff::diff_paths;
 use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -32,6 +33,19 @@ pub enum Error {
     NoVersionFileError(PathBuf),
 }
 
+pub struct VersionFileInfo {
+    pub version: Version,
+    pub filepath: PathBuf,
+}
+impl VersionFileInfo {
+    fn to_relative_path(self, base_dir: impl AsRef<Path>) -> Self {
+        Self {
+            version: self.version,
+            filepath: diff_paths(self.filepath, base_dir).unwrap(),
+        }
+    }
+}
+
 impl VersionFile {
     pub fn is_recursive(&self) -> bool {
         self.is_recursive
@@ -39,20 +53,21 @@ impl VersionFile {
     pub fn filename(&self) -> &Path {
         self.filename.as_path()
     }
-    pub fn get_version(&self) -> Result<(Version, PathBuf), Error> {
+    pub fn get_version_info(&self) -> Result<VersionFileInfo, Error> {
         let current_dir = std::env::current_dir().expect("Can't get a current directory");
-        if self.is_recursive {
-            self.search_recursively(current_dir)
+        (if self.is_recursive {
+            self.search_recursively(&current_dir)
         } else {
-            self.search_current(current_dir)?
+            self.search_current(&current_dir)?
                 .ok_or(Error::NoVersionFileError(self.filename.clone()))
-        }
+        })
+        .map(|info| info.to_relative_path(&current_dir))
     }
 
     fn search_current(
         &self,
         current_dir: impl AsRef<Path>,
-    ) -> Result<Option<(Version, PathBuf)>, Error> {
+    ) -> Result<Option<VersionFileInfo>, Error> {
         let filepath = current_dir.as_ref().join(self.filename.as_path());
         fs::read_to_string(&filepath)
             .ok()
@@ -66,15 +81,12 @@ impl VersionFile {
                             source,
                         })
                     })
-                    .map(|v| (v, filepath))
+                    .map(|version| VersionFileInfo { version, filepath })
             })
             .transpose()
     }
 
-    fn search_recursively(
-        &self,
-        current_dir: impl AsRef<Path>,
-    ) -> Result<(Version, PathBuf), Error> {
+    fn search_recursively(&self, current_dir: impl AsRef<Path>) -> Result<VersionFileInfo, Error> {
         let mut searching_dir = Some(current_dir.as_ref());
         while let Some(dir) = searching_dir {
             if let Some(version_info) = self.search_current(dir)? {
@@ -106,12 +118,11 @@ mod test {
             .unwrap();
 
         let version_info = module.search_current(current_dir);
-
         assert!(version_info.is_ok());
-        assert_eq!(
-            version_info.unwrap(),
-            Some(("8.1.1".parse().unwrap(), version_file_path))
-        );
+
+        let version_info = version_info.unwrap().unwrap();
+        assert_eq!(version_info.version, "8.1.1".parse().unwrap());
+        assert_eq!(version_info.filepath, version_file_path);
     }
 
     #[test]
@@ -128,13 +139,12 @@ mod test {
             .write_all(b"8.1.1")
             .unwrap();
 
-        let current_dir = root_dir.path().join("child").join("grand_child");
+        let current_dir = root_dir.path().join("sub-dir").join("sub-sub-dir");
         let version_info = module.search_recursively(current_dir);
-
         assert!(version_info.is_ok());
-        assert_eq!(
-            version_info.unwrap(),
-            ("8.1.1".parse().unwrap(), version_file_path)
-        );
+
+        let version_info = version_info.unwrap();
+        assert_eq!(version_info.version, "8.1.1".parse().unwrap(),);
+        assert_eq!(version_info.filepath, version_file_path);
     }
 }

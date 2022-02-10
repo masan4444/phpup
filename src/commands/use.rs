@@ -7,6 +7,7 @@ use crate::version_file::{self, VersionFile};
 use clap;
 use colored::Colorize;
 use derive_more::Display;
+use std::path::PathBuf;
 use std::str::FromStr;
 use thiserror::Error;
 
@@ -42,6 +43,9 @@ pub enum Error {
 
     #[error("Can't detect a version: {0}")]
     NoVersionFromFileError(#[from] version_file::Error),
+
+    #[error("Can't find installed version '{0}', specified by '{1}'")]
+    NotInstalledFromFileError(Version, PathBuf),
 }
 
 macro_rules! outln {
@@ -72,19 +76,22 @@ impl Command for Use {
                 }
             },
             None => {
-                let (version, version_file_path) = match self.version_file.get_version() {
+                let info = match self.version_file.get_version_info() {
                     Err(version_file::Error::NoVersionFileError(_)) if self.quiet => return Ok(()),
                     other => other,
                 }?;
                 outln!(
                     !self.quiet,
                     "{} has been specified from {}",
-                    version.decorized(),
-                    version_file_path.display().decorized()
+                    info.version.decorized(),
+                    info.filepath.display().decorized()
                 );
                 config
-                    .latest_local_version_included_in(&version)
-                    .ok_or(Error::NotInstalledError(version))?
+                    .latest_local_version_included_in(&info.version)
+                    .ok_or(Error::NotInstalledFromFileError(
+                        info.version,
+                        info.filepath,
+                    ))?
             }
         };
 

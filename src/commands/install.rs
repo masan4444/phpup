@@ -3,7 +3,7 @@ use crate::curl;
 use crate::decorized::Decorized;
 use crate::release;
 use crate::version::Version;
-use crate::version_file::{self, VersionFile};
+use crate::version_file::{self, VersionFile, VersionFileInfo};
 use clap;
 use colored::Colorize;
 use flate2::read::GzDecoder;
@@ -97,11 +97,11 @@ impl Command for Install {
 
 impl Install {
     fn get_version_from_version_file(&self) -> Result<Version, Error> {
-        let (version, version_file_path) = self.version_file.get_version()?;
+        let VersionFileInfo { version, filepath } = self.version_file.get_version_info()?;
         println!(
             "{} has been specified from {}",
             version.decorized(),
-            version_file_path.display().decorized()
+            filepath.display().decorized()
         );
         Ok(version)
     }
