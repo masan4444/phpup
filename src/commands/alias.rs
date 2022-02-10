@@ -15,7 +15,7 @@ pub struct Alias {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Can't find installed version '{0}'")]
-    NotInstalledError(Version),
+    NotInstalled(Version),
 }
 
 impl Command for Alias {
@@ -23,7 +23,7 @@ impl Command for Alias {
     fn run(&self, config: &Config) -> Result<(), Error> {
         let version = config
             .latest_local_version_included_in(&self.version)
-            .ok_or(Error::NotInstalledError(self.version))?;
+            .ok_or(Error::NotInstalled(self.version))?;
 
         let alias_symlink = self.alias.symlink_path(&config.aliases_dir());
         if alias_symlink.exists() {

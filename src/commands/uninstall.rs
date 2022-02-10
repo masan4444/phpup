@@ -14,9 +14,9 @@ pub struct Uninstall {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Can't find installed version '{0}'")]
-    NotInstalledError(Version),
+    NotInstalled(Version),
     #[error(transparent)]
-    NoMultiShellPathError(#[from] ConfigError),
+    NoMultiShellPath(#[from] ConfigError),
 }
 
 impl Command for Uninstall {
@@ -25,7 +25,7 @@ impl Command for Uninstall {
         let uninstall_version = config
             .local_versions()
             .find(|local| local == &self.version)
-            .ok_or(Error::NotInstalledError(self.version))?;
+            .ok_or(Error::NotInstalled(self.version))?;
 
         if config.current_version() == Some(uninstall_version) {
             symlink::remove(&config.multishell_path()?).expect("Can't remove symlink!");

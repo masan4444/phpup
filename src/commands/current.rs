@@ -12,7 +12,7 @@ impl Command for Current {
     type Error = Error;
     fn run(&self, config: &Config) -> Result<(), Error> {
         if let Some(version) = config.current_version() {
-            println!("{}", version.to_string());
+            println!("{}", version);
         } else {
             println!("none");
         }

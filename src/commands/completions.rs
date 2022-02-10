@@ -23,7 +23,7 @@ impl Command for Completions {
     fn run(&self, _: &Config) -> Result<(), Error> {
         let shell = self
             .shell
-            .map_or_else(|| Shell::detect_shell(), Ok)?
+            .map_or_else(Shell::detect_shell, Ok)?
             .to_clap_shell();
         let app = Cli::into_app();
         let mut stdout = std::io::stdout();

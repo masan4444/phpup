@@ -24,13 +24,13 @@ pub struct VersionFile {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Can't parse string written in {filepath}: {source}")]
-    VersionParseError {
+    FailedParseVersion {
         filepath: PathBuf,
         #[source]
         source: ParseError,
     },
     #[error("Can't find a version file: \"{0}\"")]
-    NoVersionFileError(PathBuf),
+    NoVersionFile(PathBuf),
 }
 
 pub struct VersionFileInfo {
@@ -38,10 +38,10 @@ pub struct VersionFileInfo {
     pub filepath: PathBuf,
 }
 impl VersionFileInfo {
-    fn to_relative_path(self, base_dir: impl AsRef<Path>) -> Self {
+    fn to_relative_path(&self, base_dir: impl AsRef<Path>) -> Self {
         Self {
             version: self.version,
-            filepath: diff_paths(self.filepath, base_dir).unwrap(),
+            filepath: diff_paths(&self.filepath, base_dir).unwrap(),
         }
     }
 }
@@ -59,7 +59,7 @@ impl VersionFile {
             self.search_recursively(&current_dir)
         } else {
             self.search_current(&current_dir)?
-                .ok_or(Error::NoVersionFileError(self.filename.clone()))
+                .ok_or_else(|| Error::NoVersionFile(self.filename.clone()))
         })
         .map(|info| info.to_relative_path(&current_dir))
     }
@@ -75,11 +75,9 @@ impl VersionFile {
                 string
                     .trim()
                     .parse::<Version>()
-                    .or_else(|source| {
-                        Err(Error::VersionParseError {
-                            filepath: filepath.clone(),
-                            source,
-                        })
+                    .map_err(|source| Error::FailedParseVersion {
+                        filepath: filepath.clone(),
+                        source,
                     })
                     .map(|version| VersionFileInfo { version, filepath })
             })
@@ -94,7 +92,7 @@ impl VersionFile {
             }
             searching_dir = dir.parent()
         }
-        Err(Error::NoVersionFileError(self.filename.clone()))
+        Err(Error::NoVersionFile(self.filename.clone()))
     }
 }
 

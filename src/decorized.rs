@@ -14,7 +14,7 @@ pub trait Decorized: std::fmt::Display {
 impl Decorized for crate::version::Version {
     type Color = color::Cyan;
     fn decorized_with_prefix(&self) -> colored::ColoredString {
-        let with_prefix = format!("PHP {}", self.to_string());
+        let with_prefix = format!("PHP {}", self);
         with_prefix.color(Self::Color::color())
     }
 }

@@ -24,10 +24,10 @@ pub struct Install {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error(transparent)]
-    CantFetchReleaseError(#[from] release::Error),
+    FailedFetchRelease(#[from] release::FetchError),
 
     #[error("Can't detect a version: {0}")]
-    NoVersionFromFileError(#[from] version_file::Error),
+    NoVersionFromFile(#[from] version_file::Error),
 }
 
 impl Command for Install {
@@ -127,7 +127,7 @@ impl Install {
         if !configure.status.success() {
             println!(
                 "configure failed: {}",
-                String::from_utf8_lossy(&configure.stderr).to_string()
+                String::from_utf8_lossy(&configure.stderr)
             );
             return Err(());
         };
@@ -140,10 +140,7 @@ impl Install {
             .output()
             .unwrap();
         if !make.status.success() {
-            println!(
-                "make failed: {}",
-                String::from_utf8_lossy(&make.stderr).to_string()
-            );
+            println!("make failed: {}", String::from_utf8_lossy(&make.stderr));
             return Err(());
         };
 
@@ -156,7 +153,7 @@ impl Install {
         if !make_install.status.success() {
             println!(
                 "make install: {}",
-                String::from_utf8_lossy(&make_install.stderr).to_string()
+                String::from_utf8_lossy(&make_install.stderr)
             );
             return Err(());
         };

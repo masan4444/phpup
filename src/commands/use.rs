@@ -33,19 +33,19 @@ enum VersionName {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Can't find installed version '{0}'")]
-    NotInstalledError(Version),
+    NotInstalled(Version),
 
     #[error(transparent)]
-    NoMultiShellPathError(#[from] ConfigError),
+    NoMultiShellPath(#[from] ConfigError),
 
     #[error(transparent)]
-    NotFoundAliasError(#[from] alias::Error),
+    NotFoundAlias(#[from] alias::Error),
 
     #[error("Can't detect a version: {0}")]
-    NoVersionFromFileError(#[from] version_file::Error),
+    NoVersionFromFile(#[from] version_file::Error),
 
     #[error("Can't find installed version '{0}', specified by '{1}'")]
-    NotInstalledFromFileError(Version, PathBuf),
+    NotInstalledFromFile(Version, PathBuf),
 }
 
 macro_rules! outln {
@@ -63,7 +63,7 @@ impl Command for Use {
             Some(version_name) => match version_name {
                 VersionName::Version(version) => config
                     .latest_local_version_included_in(version)
-                    .ok_or(Error::NotInstalledError(*version))?,
+                    .ok_or(Error::NotInstalled(*version))?,
                 VersionName::Alias(alias) => {
                     let (_, version) = alias.resolve(config.aliases_dir())?;
                     outln!(
@@ -77,7 +77,7 @@ impl Command for Use {
             },
             None => {
                 let info = match self.version_file.get_version_info() {
-                    Err(version_file::Error::NoVersionFileError(_)) if self.quiet => return Ok(()),
+                    Err(version_file::Error::NoVersionFile(_)) if self.quiet => return Ok(()),
                     other => other,
                 }?;
                 outln!(
@@ -88,10 +88,7 @@ impl Command for Use {
                 );
                 config
                     .latest_local_version_included_in(&info.version)
-                    .ok_or(Error::NotInstalledFromFileError(
-                        info.version,
-                        info.filepath,
-                    ))?
+                    .ok_or(Error::NotInstalledFromFile(info.version, info.filepath))?
             }
         };
 
@@ -122,6 +119,6 @@ impl FromStr for VersionName {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(s.parse::<Version>()
-            .map_or(Self::Alias(s.parse().unwrap()), |v| Self::Version(v)))
+            .map_or(Self::Alias(s.parse().unwrap()), Self::Version))
     }
 }

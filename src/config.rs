@@ -6,7 +6,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
-#[derive(clap::Parser, Debug)]
+#[derive(clap::Parser, Debug, Default)]
 pub struct Config {
     /// Specify a custom PHP-UP directory
     #[clap(long = "phpup-dir", env = "PHPUP_DIR")]
@@ -20,24 +20,14 @@ pub struct Config {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Not yet initialized; Need to run `eval \"$(phpup init)\"`")]
-    NoMultiShellPathError,
-}
-
-impl std::default::Default for Config {
-    fn default() -> Self {
-        Self {
-            base_dir: None,
-            multishell_path: None,
-        }
-    }
+    NoMultiShellPath,
 }
 
 impl Config {
     pub fn multishell_path(&self) -> Result<&Path, Error> {
         self.multishell_path
-            .as_ref()
-            .map(|path| path.as_path())
-            .ok_or(Error::NoMultiShellPathError)
+            .as_deref()
+            .ok_or(Error::NoMultiShellPath)
     }
     pub fn base_dir(&self) -> PathBuf {
         if let Some(base_dir) = self.base_dir.as_ref() {
@@ -50,16 +40,14 @@ impl Config {
     }
     pub fn versions_dir(&self) -> PathBuf {
         let versions_dir = self.base_dir().join("versions").join("php");
-        fs::create_dir_all(&versions_dir).expect(&format!(
-            "Can't create version dirctory: {:?}",
-            versions_dir
-        ));
+        fs::create_dir_all(&versions_dir)
+            .unwrap_or_else(|_| panic!("Can't create version dirctory: {:?}", versions_dir));
         versions_dir
     }
     pub fn aliases_dir(&self) -> PathBuf {
         let aliases_dir = self.base_dir().join("aliases");
         fs::create_dir_all(&aliases_dir)
-            .expect(&format!("Can't create alias dirctory: {:?}", aliases_dir));
+            .unwrap_or_else(|_| panic!("Can't create alias dirctory: {:?}", aliases_dir));
         aliases_dir
     }
     pub fn current_version(&self) -> Option<Version> {
@@ -80,7 +68,7 @@ impl Config {
         let versions_dir = self.versions_dir();
         fs::read_dir(&versions_dir)
             .unwrap()
-            .flat_map(|entry| entry)
+            .flatten()
             .flat_map(|path| path.path().file_name().map(ToOwned::to_owned))
             .flat_map(|dir_os_str| dir_os_str.into_string())
             .flat_map(|dir_str| dir_str.parse::<Version>())
@@ -110,7 +98,7 @@ impl Config {
         let mut map: HashMap<Version, Vec<Alias>> = HashMap::new();
         fs::read_dir(&aliases_dir)
             .unwrap()
-            .flat_map(|entry| entry)
+            .flatten()
             .flat_map(|path| path.path().file_name().map(ToOwned::to_owned))
             .flat_map(|dir_os_str| dir_os_str.into_string())
             .flat_map(|dir_str| dir_str.parse::<Alias>())
