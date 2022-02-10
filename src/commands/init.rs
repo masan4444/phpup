@@ -49,7 +49,6 @@ impl Command for Init {
 fn create_symlink() -> std::path::PathBuf {
     let temp_dir = std::env::temp_dir().join("phpup");
     std::fs::create_dir_all(&temp_dir).expect("Can't create tempdir!");
-    
 
     // TODO: default version
     // symlink::link(&default_version_dir, &symlink_path).expect("Can't create symlink!");
