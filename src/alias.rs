@@ -10,7 +10,7 @@ pub struct Alias(String);
 pub enum Error {
     #[error("Can't resolve alias: {0}")]
     NotFoundAliasError(String),
-    #[error("Can't find version: {0}`")]
+    #[error("Can't find version: '{0}'")]
     NotFoundVersionError(String),
 }
 
