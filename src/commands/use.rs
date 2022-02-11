@@ -97,7 +97,7 @@ impl Command for Use {
         let version_dir = config.versions_dir().join(request_version.to_string());
 
         symlink::remove(multishell_path).expect("Can't remove symlink!");
-        symlink::link(version_dir, multishell_path).expect("Can't create symlink!");
+        symlink::link(version_dir.join("bin"), multishell_path).expect("Can't create symlink!");
 
         outln!(
             !self.quiet,

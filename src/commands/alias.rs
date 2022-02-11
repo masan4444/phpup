@@ -30,7 +30,7 @@ impl Command for Alias {
             fs::remove_file(&alias_symlink).expect("Can't remove alias symbolic link");
         }
         let version_dir = config.versions_dir().join(version.to_string());
-        symlink::link(version_dir, alias_symlink).expect("Can't create symlink!");
+        symlink::link(version_dir.join("bin"), alias_symlink).expect("Can't create symlink!");
 
         println!(
             "Set alias {} -> {}",

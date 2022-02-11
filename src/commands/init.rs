@@ -32,8 +32,8 @@ impl Command for Init {
         let shell = self.shell.map_or_else(Shell::detect_shell, Ok)?;
         let symlink = create_symlink();
         let mut eval_stmts = vec![
-            shell.set_env("PHPUP_MULTISHELL_PATH", symlink.to_str().unwrap()),
-            shell.set_path(symlink.join("bin").to_str().unwrap()),
+            shell.set_env("PHPUP_MULTISHELL_PATH", symlink.display()),
+            shell.set_path(symlink),
         ];
         if self.auto_switch {
             eval_stmts.push(shell.auto_switch_hook(&self.version_file))

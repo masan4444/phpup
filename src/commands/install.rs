@@ -120,7 +120,7 @@ impl Install {
         println!("./configure");
         command
             .arg("configure")
-            .arg(format!("--prefix={}", dist_dir.as_ref().to_str().unwrap()));
+            .arg(format!("--prefix={}", dist_dir.as_ref().display()));
         // .args(configure_opts);
 
         let configure = command.current_dir(&src_dir).output().unwrap();

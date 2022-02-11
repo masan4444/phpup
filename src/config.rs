@@ -54,8 +54,10 @@ impl Config {
         self.multishell_path
             .as_ref()
             .and_then(|symlink| symlink.read_link().ok())
-            .and_then(|version_dir_path| {
-                version_dir_path
+            .and_then(|bin_path| {
+                bin_path
+                    .parent()
+                    .unwrap()
                     .file_name()
                     .unwrap()
                     .to_str()
