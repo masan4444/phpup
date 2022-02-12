@@ -13,8 +13,11 @@ use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
 pub struct Use {
-    #[clap(name = "version | alias", help = "semantic version or alias name")]
-    version_name: Option<RequestVersion>,
+    #[clap(
+        name = "version | alias | system",
+        help = "semantic version or alias name"
+    )]
+    request_version: Option<RequestVersion>,
 
     #[clap(flatten)]
     version_file: version::File,
@@ -63,10 +66,9 @@ macro_rules! outln {
 impl Command for Use {
     type Error = Error;
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let request_version = match &self.version_name {
-            Some(version_name) => match version_name {
-                RequestVersion::Version(version) => config
-                    .latest_local_version_included_in(version)
+        let use_version = match &self.request_version {
+            Some(request_version) => match request_version {
+                RequestVersion::Version(version) => version::latest_installed_by(version, config)
                     .ok_or(Error::NotInstalled(*version))?,
                 RequestVersion::Alias(alias) => {
                     let (_, version) = alias.resolve(config.aliases_dir())?;
@@ -80,12 +82,13 @@ impl Command for Use {
                 }
                 RequestVersion::System => {
                     let system_path = version::system::path().ok_or(Error::NoSystemVersion)?;
-                    replace_multishell_path(system_path, config)?;
+                    replace_multishell_path(&system_path, config)?;
 
                     outln!(
                         !self.quiet,
-                        "Using {} PHP",
-                        "system".color(<Version as Decorized>::Color::color())
+                        "Using PHP {} -> {}",
+                        "system".color(<Version as Decorized>::Color::color()),
+                        system_path.join("php").display().decorized()
                     );
                     return Ok(());
                 }
@@ -101,20 +104,15 @@ impl Command for Use {
                     info.version.decorized(),
                     info.filepath.display().decorized()
                 );
-                config
-                    .latest_local_version_included_in(&info.version)
+                version::latest_installed_by(&info.version, config)
                     .ok_or(Error::NotInstalledFromFile(info.version, info.filepath))?
             }
         };
 
-        let version_dir = config.versions_dir().join(request_version.to_string());
+        let version_dir = config.versions_dir().join(use_version.to_string());
         replace_multishell_path(version_dir.join("bin"), config)?;
 
-        outln!(
-            !self.quiet,
-            "Using {}",
-            request_version.decorized_with_prefix()
-        );
+        outln!(!self.quiet, "Using {}", use_version.decorized_with_prefix());
         Ok(())
     }
 }

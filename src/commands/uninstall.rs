@@ -1,6 +1,8 @@
 use super::{Command, Config, ConfigError};
 use crate::decorized::Decorized;
 use crate::symlink;
+use crate::version;
+use crate::version::Local;
 use crate::version::Version;
 use clap;
 use std::fs;
@@ -21,13 +23,13 @@ pub enum Error {
 
 impl Command for Uninstall {
     type Error = Error;
+
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let uninstall_version = config
-            .local_versions()
-            .find(|local| local == &self.version)
+        let uninstall_version = version::installed(config)
+            .find(|installed_version| installed_version == &self.version)
             .ok_or(Error::NotInstalled(self.version))?;
 
-        if config.current_version() == Some(uninstall_version) {
+        if Local::current(config) == Some(Local::Installed(uninstall_version)) {
             symlink::remove(&config.multishell_path()?).expect("Can't remove symlink!");
         }
 

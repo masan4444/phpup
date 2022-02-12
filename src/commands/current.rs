@@ -1,4 +1,5 @@
 use super::{Command, Config};
+use crate::version::Local;
 use clap;
 use thiserror::Error;
 
@@ -10,11 +11,12 @@ pub enum Error {}
 
 impl Command for Current {
     type Error = Error;
+
     fn run(&self, config: &Config) -> Result<(), Error> {
-        if let Some(version) = config.current_version() {
-            println!("{}", version);
-        } else {
-            println!("none");
+        match Local::current(config) {
+            Some(Local::Installed(version)) => println!("{}", version),
+            Some(Local::System) => println!("system"),
+            None => println!("none"),
         }
         Ok(())
     }

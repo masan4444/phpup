@@ -40,7 +40,7 @@ impl Command for Install {
         let install_version = release.version.unwrap();
         let url = release.source_url();
 
-        if config.latest_local_version_included_in(&request_version) == Some(install_version) {
+        if version::latest_installed_by(&request_version, config) == Some(install_version) {
             println!(
                 "{}: Already installed {}",
                 "warning".yellow().bold(),

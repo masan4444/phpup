@@ -1,5 +1,7 @@
-use super::{list_local::Printer, Command, Config};
+use super::{Command, Config};
 use crate::release;
+use crate::version;
+use crate::version::Local;
 use crate::version::Version;
 use clap;
 use colored::Colorize;
@@ -32,6 +34,7 @@ pub enum Error {
 
 impl Command for ListRemote {
     type Error = Error;
+
     fn run(&self, config: &Config) -> Result<(), Error> {
         let query_versions = match &self.version {
             Some(version) => {
@@ -59,29 +62,28 @@ impl Command for ListRemote {
             }
         };
 
-        let local_versions = config.local_versions().collect_vec();
-        let aliases = config.aliases();
-        let printer = Printer::new(&local_versions, config.current_version(), &aliases);
-        featch_and_print_versions(&query_versions, self.only_latest_patch, &printer)?;
+        let installed_versions = version::installed(config).collect_vec();
+        let current_version = Local::current(config);
+
+        for query_version in query_versions {
+            let releases = release::fetch_all(query_version)?;
+            let remote_versions = releases.keys();
+
+            let remote_versions = if self.only_latest_patch {
+                filter_latest_patch(remote_versions).collect_vec()
+            } else {
+                remote_versions.collect_vec()
+            };
+
+            for &remote_version in remote_versions {
+                let installed = installed_versions.contains(&remote_version);
+                let remote_version = Local::Installed(remote_version);
+                let used = Some(&remote_version) == current_version.as_ref();
+                println!("{}", remote_version.to_string_by(installed, used, config))
+            }
+        }
         Ok(())
     }
-}
-
-fn featch_and_print_versions(
-    query_versions: &[Version],
-    latest_patch: bool,
-    printer: &Printer,
-) -> Result<(), Error> {
-    for &query_version in query_versions {
-        let releases = release::fetch_all(query_version)?;
-        let versions = releases.keys();
-        if latest_patch {
-            printer.print_versions(filter_latest_patch(versions));
-        } else {
-            printer.print_versions(versions);
-        };
-    }
-    Ok(())
 }
 
 fn filter_latest_patch<'a, I>(versions: I) -> impl Iterator<Item = &'a Version>

@@ -1,6 +1,7 @@
 use super::{Command, Config};
 use crate::decorized::Decorized;
 use crate::symlink;
+use crate::version;
 use crate::version::Version;
 use clap;
 use std::fs;
@@ -20,9 +21,9 @@ pub enum Error {
 
 impl Command for Alias {
     type Error = Error;
+
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let version = config
-            .latest_local_version_included_in(&self.version)
+        let version = version::latest_installed_by(&self.version, config)
             .ok_or(Error::NotInstalled(self.version))?;
 
         let alias_symlink = self.alias.symlink_path(&config.aliases_dir());
@@ -30,7 +31,7 @@ impl Command for Alias {
             fs::remove_file(&alias_symlink).expect("Can't remove alias symbolic link");
         }
         let version_dir = config.versions_dir().join(version.to_string());
-        symlink::link(version_dir.join("bin"), alias_symlink).expect("Can't create symlink!");
+        symlink::link(version_dir, alias_symlink).expect("Can't create symlink!");
 
         println!(
             "Set alias {} -> {}",
