@@ -15,7 +15,7 @@ use thiserror::Error;
 pub struct Use {
     #[clap(
         name = "version | alias | system",
-        help = "semantic version or alias name"
+        help = "installed version or alias name or system"
     )]
     request_version: Option<RequestVersion>,
 
@@ -65,6 +65,7 @@ macro_rules! outln {
 
 impl Command for Use {
     type Error = Error;
+
     fn run(&self, config: &Config) -> Result<(), Error> {
         let use_version = match &self.request_version {
             Some(request_version) => match request_version {
@@ -82,13 +83,13 @@ impl Command for Use {
                 }
                 RequestVersion::System => {
                     let system_path = version::system::path().ok_or(Error::NoSystemVersion)?;
-                    replace_multishell_path(&system_path, config)?;
+                    replace_multishell_path(&system_path.parent().unwrap(), config)?;
 
                     outln!(
                         !self.quiet,
                         "Using PHP {} -> {}",
                         "system".color(<Version as Decorized>::Color::color()),
-                        system_path.join("php").display().decorized()
+                        system_path.display().decorized()
                     );
                     return Ok(());
                 }

@@ -1,10 +1,13 @@
 use std::path::PathBuf;
-use which::which;
+use which::which_all;
 
 pub fn path() -> Option<PathBuf> {
-    which("php")
+    let multishell_path_dir = std::env::temp_dir().join("phpup");
+    which_all("php")
         .ok()
-        .and_then(|bin_path| bin_path.parent().map(|p| p.to_path_buf()))
+        .into_iter()
+        .flatten()
+        .find(|bin_path| !bin_path.starts_with(&multishell_path_dir))
 }
 
 #[cfg(test)]
@@ -13,7 +16,7 @@ mod test {
 
     #[test]
     fn test() {
-        let system_path = path().unwrap();
+        let system_path = path();
         println!("{:?}", system_path);
     }
 }
