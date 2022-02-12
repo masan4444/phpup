@@ -7,7 +7,7 @@
 - [ ] automatically `use` when `install` first time
 - [x] auto version switching via `.php-version`
 - [x] colorize output
-- [ ] embed system php version
+- [x] embed system php version
 - [x] shell completion
 - [ ] pre-release install (`8.1.0alpha2` etc..)
 - [ ] install with extention (`+mysql` etc..)
