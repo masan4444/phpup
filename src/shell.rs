@@ -1,4 +1,4 @@
-use crate::version_file::VersionFile;
+use crate::version;
 use indoc::formatdoc;
 use std::fmt::Display;
 use std::path::Path;
@@ -69,7 +69,7 @@ impl Shell {
             }
         }
     }
-    pub fn auto_switch_hook(&self, version_file: &VersionFile) -> String {
+    pub fn auto_switch_hook(&self, version_file: &version::File) -> String {
         let version_file_name = version_file.filename().display();
         let is_recursive_version_file = if version_file.is_recursive() {
             "--recursive-version-file"

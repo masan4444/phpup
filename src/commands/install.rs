@@ -2,8 +2,7 @@ use super::{Command, Config};
 use crate::curl;
 use crate::decorized::Decorized;
 use crate::release;
-use crate::version::Version;
-use crate::version_file::{self, VersionFile, VersionFileInfo};
+use crate::version::{self, Version};
 use clap;
 use colored::Colorize;
 use flate2::read::GzDecoder;
@@ -18,7 +17,7 @@ pub struct Install {
     version: Option<Version>,
 
     #[clap(flatten)]
-    version_file: VersionFile,
+    version_file: version::File,
 }
 
 #[derive(Error, Debug)]
@@ -27,7 +26,7 @@ pub enum Error {
     FailedFetchRelease(#[from] release::FetchError),
 
     #[error("Can't detect a version: {0}")]
-    NoVersionFromFile(#[from] version_file::Error),
+    NoVersionFromFile(#[from] version::file::Error),
 }
 
 impl Command for Install {
@@ -97,13 +96,13 @@ impl Command for Install {
 
 impl Install {
     fn get_version_from_version_file(&self) -> Result<Version, Error> {
-        let VersionFileInfo { version, filepath } = self.version_file.get_version_info()?;
+        let version_info = self.version_file.get_version_info()?;
         println!(
             "{} has been specified from {}",
-            version.decorized(),
-            filepath.display().decorized()
+            version_info.version.decorized(),
+            version_info.filepath.display().decorized()
         );
-        Ok(version)
+        Ok(version_info.version)
     }
 
     // TODO: checksum

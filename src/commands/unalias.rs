@@ -1,6 +1,6 @@
 use super::{Command, Config};
-use crate::alias::Alias;
 use crate::decorized::Decorized;
+use crate::version::Alias;
 use clap;
 use std::fs;
 use thiserror::Error;

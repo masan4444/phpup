@@ -9,7 +9,7 @@ use thiserror::Error;
 #[derive(clap::Parser, Debug)]
 pub struct Alias {
     version: Version,
-    alias: crate::alias::Alias,
+    alias: crate::version::Alias,
 }
 
 #[derive(Error, Debug)]

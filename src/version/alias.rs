@@ -1,4 +1,4 @@
-use crate::version::Version;
+use super::semantic::Version;
 use derive_more::{Display, FromStr};
 use std::path::{Path, PathBuf};
 use thiserror::Error;

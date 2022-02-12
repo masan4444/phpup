@@ -1,3 +1,4 @@
+use crate::version::Alias;
 use crate::version::Version;
 use clap;
 use itertools::Itertools;
@@ -94,8 +95,7 @@ impl Config {
     pub fn latest_local_version_included_in(&self, version: &Version) -> Option<Version> {
         self.local_versions_included_in(version).max()
     }
-    pub fn aliases(&self) -> HashMap<Version, Vec<crate::alias::Alias>> {
-        use crate::alias::Alias;
+    pub fn aliases(&self) -> HashMap<Version, Vec<Alias>> {
         let aliases_dir = self.aliases_dir();
         let mut map: HashMap<Version, Vec<Alias>> = HashMap::new();
         fs::read_dir(&aliases_dir)

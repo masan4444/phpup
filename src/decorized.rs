@@ -18,7 +18,7 @@ impl Decorized for crate::version::Version {
         with_prefix.color(Self::Color::color())
     }
 }
-impl Decorized for crate::alias::Alias {
+impl Decorized for crate::version::Alias {
     type Color = color::Cyan;
 }
 impl Decorized for std::path::Display<'_> {

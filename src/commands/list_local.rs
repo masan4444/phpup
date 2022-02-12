@@ -1,6 +1,6 @@
 use super::{Command, Config};
-use crate::alias::Alias;
 use crate::decorized::{color::Color, Decorized};
+use crate::version::Alias;
 use crate::version::Version;
 use clap;
 use colored::Colorize;

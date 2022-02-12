@@ -1,7 +1,7 @@
 use super::{Command, Config};
 // use crate::symlink;
 use crate::shell::{self, Shell};
-use crate::version_file::VersionFile;
+use crate::version;
 use clap;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -17,7 +17,7 @@ pub struct Init {
     auto_switch: bool,
 
     #[clap(flatten)]
-    version_file: VersionFile,
+    version_file: version::File,
 }
 
 #[derive(Error, Debug)]

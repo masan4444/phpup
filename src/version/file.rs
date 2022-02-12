@@ -1,4 +1,4 @@
-use crate::version::{ParseError, Version};
+use super::semantic::{ParseError, Version};
 use pathdiff::diff_paths;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -7,7 +7,7 @@ use thiserror::Error;
 const DEFAULT_VERSION_FILE_NAME: &str = ".php-version";
 
 #[derive(clap::Parser, Debug)]
-pub struct VersionFile {
+pub struct File {
     /// Spacify a custom version file name
     #[clap(long = "version-file-name", env = "PHPUP_VERSION_FILE_NAME", default_value = DEFAULT_VERSION_FILE_NAME)]
     filename: PathBuf,
@@ -33,11 +33,11 @@ pub enum Error {
     NoVersionFile(PathBuf),
 }
 
-pub struct VersionFileInfo {
+pub struct FileInfo {
     pub version: Version,
     pub filepath: PathBuf,
 }
-impl VersionFileInfo {
+impl FileInfo {
     fn to_relative_path(&self, base_dir: impl AsRef<Path>) -> Self {
         Self {
             version: self.version,
@@ -46,14 +46,14 @@ impl VersionFileInfo {
     }
 }
 
-impl VersionFile {
+impl File {
     pub fn is_recursive(&self) -> bool {
         self.is_recursive
     }
     pub fn filename(&self) -> &Path {
         self.filename.as_path()
     }
-    pub fn get_version_info(&self) -> Result<VersionFileInfo, Error> {
+    pub fn get_version_info(&self) -> Result<FileInfo, Error> {
         let current_dir = std::env::current_dir().expect("Can't get a current directory");
         (if self.is_recursive {
             self.search_recursively(&current_dir)
@@ -64,10 +64,7 @@ impl VersionFile {
         .map(|info| info.to_relative_path(&current_dir))
     }
 
-    fn search_current(
-        &self,
-        current_dir: impl AsRef<Path>,
-    ) -> Result<Option<VersionFileInfo>, Error> {
+    fn search_current(&self, current_dir: impl AsRef<Path>) -> Result<Option<FileInfo>, Error> {
         let filepath = current_dir.as_ref().join(self.filename.as_path());
         fs::read_to_string(&filepath)
             .ok()
@@ -79,12 +76,12 @@ impl VersionFile {
                         filepath: filepath.clone(),
                         source,
                     })
-                    .map(|version| VersionFileInfo { version, filepath })
+                    .map(|version| FileInfo { version, filepath })
             })
             .transpose()
     }
 
-    fn search_recursively(&self, current_dir: impl AsRef<Path>) -> Result<VersionFileInfo, Error> {
+    fn search_recursively(&self, current_dir: impl AsRef<Path>) -> Result<FileInfo, Error> {
         let mut searching_dir = Some(current_dir.as_ref());
         while let Some(dir) = searching_dir {
             if let Some(version_info) = self.search_current(dir)? {
@@ -103,7 +100,7 @@ mod test {
 
     #[test]
     fn search_current_success() {
-        let module = VersionFile {
+        let module = File {
             filename: PathBuf::from(".php-version"),
             is_recursive: false,
         };
@@ -125,7 +122,7 @@ mod test {
 
     #[test]
     fn search_recursively_success() {
-        let module = VersionFile {
+        let module = File {
             filename: PathBuf::from(".php-version"),
             is_recursive: true,
         };
