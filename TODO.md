@@ -3,7 +3,7 @@
 ## New feature
 
 - [x] alias
-- [ ] defaut alias
+- [x] defaut alias
 - [ ] automatically `use` when `install` first time
 - [x] auto version switching via `.php-version`
 - [x] colorize output
