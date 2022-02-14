@@ -107,7 +107,7 @@ impl Command for Use {
             }
             Local::System => {
                 let system_path = version::system::path().ok_or(Error::NoSystemVersion)?;
-                replace_multishell_path(&system_path.parent().unwrap(), config)?;
+                replace_multishell_path(&system_path, config)?;
 
                 outln!(
                     !self.quiet,

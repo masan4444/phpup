@@ -22,12 +22,18 @@ pub enum Error {
     Io(#[from] std::io::Error),
 }
 
+impl Default for Alias {
+    fn default() -> Self {
+        Self("default".to_owned())
+    }
+}
+
 impl Alias {
     fn filepath(&self, aliases_dir: impl AsRef<Path>) -> PathBuf {
         aliases_dir.as_ref().join(&self.0)
     }
     fn is_default(&self) -> bool {
-        self.to_string() == "default"
+        self == &Self::default()
     }
 
     pub fn link(&self, version: &Local, aliases_dir: impl AsRef<Path>) -> Result<(), Error> {

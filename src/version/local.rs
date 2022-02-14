@@ -45,7 +45,7 @@ impl Local {
             .ok()
             .and_then(|symlink| symlink.read_link().ok())
             .and_then(|path| {
-                (system::path().as_ref() == Some(&path.join("php")))
+                (system::path().as_ref() == Some(&path))
                     .then(|| Local::System)
                     .or_else(|| {
                         path.parent()

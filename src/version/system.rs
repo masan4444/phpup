@@ -8,6 +8,7 @@ pub fn path() -> Option<PathBuf> {
         .into_iter()
         .flatten()
         .find(|bin_path| !bin_path.starts_with(&multishell_path_dir))
+        .and_then(|path| path.parent().map(ToOwned::to_owned))
 }
 
 #[cfg(test)]
