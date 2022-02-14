@@ -11,6 +11,10 @@ use thiserror::Error;
 pub enum FetchError {
     #[error("Can't find releases that matches {0}")]
     NotFoundRelease(Version),
+
+    #[error(transparent)]
+    CurlError(#[from] curl::Error),
+
     #[error("Receive error message from release site: {0}")]
     Other(String),
 }
@@ -28,7 +32,7 @@ fn fetch_and_parse(
         max.map(|max| format!("&max={}", max)).unwrap_or_default(),
     );
     let url = &format!("{}{}", base_url, query);
-    let json = curl::get_as_slice(url);
+    let json = curl::get_as_slice(url)?;
 
     let resp: Response =
         serde_json::from_slice(&json).unwrap_or_else(|_| panic!("Can't parse json from {}", url));

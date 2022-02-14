@@ -30,6 +30,9 @@ pub enum Error {
 
     #[error("Can't specify the system version by {0}")]
     SpecifiedSystemVersion(PathBuf),
+
+    #[error(transparent)]
+    FailedDownload(#[from] curl::Error),
 }
 
 impl Command for Install {
@@ -65,7 +68,7 @@ impl Command for Install {
         let install_dir = config.versions_dir().join(install_version.to_string());
         fs::create_dir_all(&install_dir).unwrap();
         println!(
-            "{} {}",
+            "{:>11} {}",
             "Installing".green().bold(),
             install_version.decorized_with_prefix()
         );
@@ -74,8 +77,7 @@ impl Command for Install {
             .prefix(".download-")
             .tempdir_in(&install_dir)
             .expect("Can't create a temporary directory to download to");
-        println!("{} {}", "Downloading".green().bold(), url);
-        Self::download_and_unpack(&url, &download_dir);
+        Self::download_and_unpack(&url, &download_dir)?;
 
         let source_dir = fs::read_dir(&download_dir.path())
             .unwrap()
@@ -83,18 +85,32 @@ impl Command for Install {
             .unwrap()
             .unwrap()
             .path();
-        println!(
-            "{} {}",
-            "Building from".green().bold(),
-            source_dir.display().decorized()
-        );
+
         Self::build(&source_dir, &install_dir).unwrap();
         println!(
-            "{} {}",
-            "Installed to".green().bold(),
+            "{:>11} {}",
+            "Installed".green().bold(),
             install_dir.display().decorized()
         );
         Ok(())
+    }
+}
+
+use std::io::Read;
+pub struct ProgressReader<R: Read, C: FnMut(usize)> {
+    reader: R,
+    callback: C,
+}
+impl<R: Read, C: FnMut(usize)> ProgressReader<R, C> {
+    pub fn new(reader: R, callback: C) -> Self {
+        Self { reader, callback }
+    }
+}
+impl<R: Read, C: FnMut(usize)> Read for ProgressReader<R, C> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let read = self.reader.read(buf)?;
+        (self.callback)(read);
+        Ok(read)
     }
 }
 
@@ -114,20 +130,43 @@ impl Install {
     }
 
     // TODO: checksum
-    fn download_and_unpack(url: &str, path: impl AsRef<Path>) {
-        let response = curl::get_as_reader(url);
-        let gz_decoder = GzDecoder::new(response);
+    fn download_and_unpack(url: &str, path: impl AsRef<Path>) -> Result<(), Error> {
+        use indicatif::{ProgressBar, ProgressStyle};
+
+        let (stdout, _) = curl::get_as_reader(url)?;
+        let pb = ProgressBar::new(17477521);
+        let template = format!(
+            "{{msg:.cyan.bold}} [{{bar:25}}] {{bytes}}/{{total_bytes}} ({{eta}}) {}",
+            url
+        );
+        pb.set_style(
+            ProgressStyle::default_bar()
+                .template(&template)
+                .progress_chars("=> "),
+        );
+        pb.set_message("Downloading");
+        let p_reader = ProgressReader::new(stdout, |i| pb.inc(i as u64));
+        let gz_decoder = GzDecoder::new(p_reader);
         let mut tar_archive = Archive::new(gz_decoder);
         tar_archive.unpack(path).unwrap();
+        pb.finish_and_clear();
+        println!("{:>11} {}", "Downloaded".green().bold(), url);
+        Ok(())
     }
 
     #[cfg(unix)]
     fn build(src_dir: impl AsRef<Path>, dist_dir: impl AsRef<Path>) -> Result<(), ()> {
+        println!(
+            "{:>11} {}",
+            "Building".cyan().bold(),
+            src_dir.as_ref().display().decorized()
+        );
+
         let configure = vec![
             "./configure".to_owned(),
             format!("--prefix={}", dist_dir.as_ref().display()),
         ];
-        println!("[1/3] {}", configure.join(" "));
+        println!("{:>11} {}", "[1/3]".bold().dimmed(), configure.join(" "));
         let configure_output = process::Command::new(&configure[0])
             .args(&configure[1..])
             .current_dir(&src_dir)
@@ -146,7 +185,7 @@ impl Install {
             "-j".to_owned(),
             num_cpus::get().to_string(),
         ];
-        println!("[2/3] {}", make.join(" "));
+        println!("{:>11} {}", "[2/3]".bold().dimmed(), make.join(" "));
         let make_output = process::Command::new(&make[0])
             .args(&make[1..])
             .current_dir(&src_dir)
@@ -161,7 +200,7 @@ impl Install {
         };
 
         let install = vec!["make".to_owned(), "install".to_owned()];
-        println!("[3/3] {}", install.join(" "));
+        println!("{:>11} {}", "[3/3]".bold().dimmed(), install.join(" "));
         let install_output = process::Command::new(&install[0])
             .args(&install[1..])
             .current_dir(&src_dir)
@@ -169,7 +208,7 @@ impl Install {
             .unwrap();
         if !install_output.status.success() {
             println!(
-                "make install: {}",
+                "make install failed: {}",
                 String::from_utf8_lossy(&install_output.stderr)
             );
             return Err(());
