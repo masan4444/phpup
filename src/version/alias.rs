@@ -12,7 +12,7 @@ pub struct Alias(String);
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Can't resolve alias: {0}")]
+    #[error("Can't find an alias '{0}'")]
     NotFoundAlias(String),
 
     #[error("Can't parse version: '{0}'")]
