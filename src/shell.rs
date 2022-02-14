@@ -1,5 +1,6 @@
-use crate::version_file::VersionFile;
+use crate::version;
 use indoc::formatdoc;
+use std::fmt::Display;
 use std::path::Path;
 use std::str::FromStr;
 use thiserror::Error;
@@ -57,19 +58,19 @@ impl Shell {
     pub fn set_path(&self, path: impl AsRef<Path>) -> String {
         match &self {
             Bash | Zsh => {
-                format!("export PATH={:?}:$PATH", path.as_ref().to_str().unwrap())
+                format!("export PATH={}:$PATH", path.as_ref().display())
             }
         }
     }
-    pub fn set_env(&self, name: &str, value: &str) -> String {
+    pub fn set_env(&self, name: impl Display, value: impl Display) -> String {
         match &self {
             Bash | Zsh => {
-                format!("export {}={:?}", name, value)
+                format!("export {}={}", name, value)
             }
         }
     }
-    pub fn auto_switch_hook(&self, version_file: &VersionFile) -> String {
-        let version_file_name = version_file.filename().to_str().unwrap();
+    pub fn auto_switch_hook(&self, version_file: &version::File) -> String {
+        let version_file_name = version_file.filename().display();
         let is_recursive_version_file = if version_file.is_recursive() {
             "--recursive-version-file"
         } else {

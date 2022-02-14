@@ -1,7 +1,4 @@
-use crate::version::Version;
 use clap;
-use itertools::Itertools;
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -49,68 +46,6 @@ impl Config {
         fs::create_dir_all(&aliases_dir)
             .unwrap_or_else(|_| panic!("Can't create alias dirctory: {:?}", aliases_dir));
         aliases_dir
-    }
-    pub fn current_version(&self) -> Option<Version> {
-        self.multishell_path
-            .as_ref()
-            .and_then(|symlink| symlink.read_link().ok())
-            .and_then(|version_dir_path| {
-                version_dir_path
-                    .file_name()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .parse()
-                    .ok()
-            })
-    }
-    pub fn local_versions(&self) -> impl Iterator<Item = Version> {
-        let versions_dir = self.versions_dir();
-        fs::read_dir(&versions_dir)
-            .unwrap()
-            .flatten()
-            .flat_map(|path| path.path().file_name().map(ToOwned::to_owned))
-            .flat_map(|dir_os_str| dir_os_str.into_string())
-            .flat_map(|dir_str| dir_str.parse::<Version>())
-            .filter(|version| {
-                versions_dir
-                    .join(version.to_string())
-                    // TODO: windows
-                    .join("bin")
-                    .join("php")
-                    .is_file()
-            })
-            .sorted()
-    }
-    pub fn local_versions_included_in<'a>(
-        &self,
-        version: &'a Version,
-    ) -> impl Iterator<Item = Version> + 'a {
-        self.local_versions()
-            .filter(|local_version| version.includes(local_version))
-    }
-    pub fn latest_local_version_included_in(&self, version: &Version) -> Option<Version> {
-        self.local_versions_included_in(version).max()
-    }
-    pub fn aliases(&self) -> HashMap<Version, Vec<crate::alias::Alias>> {
-        use crate::alias::Alias;
-        let aliases_dir = self.aliases_dir();
-        let mut map: HashMap<Version, Vec<Alias>> = HashMap::new();
-        fs::read_dir(&aliases_dir)
-            .unwrap()
-            .flatten()
-            .flat_map(|path| path.path().file_name().map(ToOwned::to_owned))
-            .flat_map(|dir_os_str| dir_os_str.into_string())
-            .flat_map(|dir_str| dir_str.parse::<Alias>())
-            .flat_map(|alias: Alias| {
-                alias
-                    .resolve(&aliases_dir)
-                    .map(|(_, version)| (version, alias))
-            })
-            .for_each(|(version, alias)| {
-                map.entry(version).or_default().push(alias);
-            });
-        map
     }
 
     #[cfg(test)]

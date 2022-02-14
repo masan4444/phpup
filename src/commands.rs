@@ -16,6 +16,7 @@ pub trait Command {
 mod alias;
 mod completions;
 mod current;
+mod default;
 mod init;
 mod install;
 mod list_local;
@@ -27,6 +28,7 @@ mod r#use;
 pub use alias::Alias;
 pub use completions::Completions;
 pub use current::Current;
+pub use default::Default;
 pub use init::Init;
 pub use install::Install;
 pub use list_local::ListLocal;

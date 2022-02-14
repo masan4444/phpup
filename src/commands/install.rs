@@ -2,13 +2,12 @@ use super::{Command, Config};
 use crate::curl;
 use crate::decorized::Decorized;
 use crate::release;
-use crate::version::Version;
-use crate::version_file::{self, VersionFile, VersionFileInfo};
+use crate::version::{self, Version};
 use clap;
 use colored::Colorize;
 use flate2::read::GzDecoder;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process;
 use tar::Archive;
 use thiserror::Error;
@@ -18,7 +17,7 @@ pub struct Install {
     version: Option<Version>,
 
     #[clap(flatten)]
-    version_file: VersionFile,
+    version_file: version::File,
 }
 
 #[derive(Error, Debug)]
@@ -27,7 +26,10 @@ pub enum Error {
     FailedFetchRelease(#[from] release::FetchError),
 
     #[error("Can't detect a version: {0}")]
-    NoVersionFromFile(#[from] version_file::Error),
+    NoVersionFromFile(#[from] version::file::Error),
+
+    #[error("Can't specify the system version by {0}")]
+    SpecifiedSystemVersion(PathBuf),
 }
 
 impl Command for Install {
@@ -41,7 +43,7 @@ impl Command for Install {
         let install_version = release.version.unwrap();
         let url = release.source_url();
 
-        if config.latest_local_version_included_in(&request_version) == Some(install_version) {
+        if version::latest_installed_by(&request_version, config) == Some(install_version) {
             println!(
                 "{}: Already installed {}",
                 "warning".yellow().bold(),
@@ -97,13 +99,17 @@ impl Command for Install {
 
 impl Install {
     fn get_version_from_version_file(&self) -> Result<Version, Error> {
-        let VersionFileInfo { version, filepath } = self.version_file.get_version_info()?;
-        println!(
-            "{} has been specified from {}",
-            version.decorized(),
-            filepath.display().decorized()
-        );
-        Ok(version)
+        let version_info = self.version_file.get_version_info()?;
+        if let Some(version) = version_info.version.as_version() {
+            println!(
+                "{} has been specified from {}",
+                version.decorized(),
+                version_info.filepath.display().decorized()
+            );
+            Ok(version)
+        } else {
+            Err(Error::SpecifiedSystemVersion(version_info.filepath))
+        }
     }
 
     // TODO: checksum
@@ -120,7 +126,7 @@ impl Install {
         println!("./configure");
         command
             .arg("configure")
-            .arg(format!("--prefix={}", dist_dir.as_ref().to_str().unwrap()));
+            .arg(format!("--prefix={}", dist_dir.as_ref().display()));
         // .args(configure_opts);
 
         let configure = command.current_dir(&src_dir).output().unwrap();

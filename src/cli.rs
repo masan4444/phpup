@@ -48,6 +48,10 @@ pub enum SubCommand {
     #[clap(bin_name = "unalias")]
     Unalias(commands::Unalias),
 
+    /// Set a version as the default version
+    #[clap(bin_name = "default")]
+    Default(commands::Default),
+
     /// Print shell completions
     #[clap(bin_name = "completions")]
     Completions(commands::Completions),
@@ -66,6 +70,7 @@ impl SubCommand {
             Uninstall(cmd) => cmd.apply(&config),
             Alias(cmd) => cmd.apply(&config),
             Unalias(cmd) => cmd.apply(&config),
+            Default(cmd) => cmd.apply(&config),
             Completions(cmd) => cmd.apply(&config),
         };
     }
