@@ -8,8 +8,8 @@ use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
 pub struct Alias {
-    alias: crate::version::Alias,
-    link_version: version::Local,
+    pub alias: crate::version::Alias,
+    pub link_version: version::Local,
 }
 
 #[derive(Error, Debug)]
