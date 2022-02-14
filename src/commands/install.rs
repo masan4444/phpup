@@ -34,6 +34,7 @@ pub enum Error {
 
 impl Command for Install {
     type Error = Error;
+
     fn run(&self, config: &Config) -> Result<(), Error> {
         let request_version = self
             .version
@@ -120,46 +121,56 @@ impl Install {
         tar_archive.unpack(path).unwrap();
     }
 
+    #[cfg(unix)]
     fn build(src_dir: impl AsRef<Path>, dist_dir: impl AsRef<Path>) -> Result<(), ()> {
-        let mut command = process::Command::new("sh");
-
-        println!("./configure");
-        command
-            .arg("configure")
-            .arg(format!("--prefix={}", dist_dir.as_ref().display()));
-        // .args(configure_opts);
-
-        let configure = command.current_dir(&src_dir).output().unwrap();
-        if !configure.status.success() {
+        let configure = vec![
+            "./configure".to_owned(),
+            format!("--prefix={}", dist_dir.as_ref().display()),
+        ];
+        println!("[1/3] {}", configure.join(" "));
+        let configure_output = process::Command::new(&configure[0])
+            .args(&configure[1..])
+            .current_dir(&src_dir)
+            .output()
+            .unwrap();
+        if !configure_output.status.success() {
             println!(
                 "configure failed: {}",
-                String::from_utf8_lossy(&configure.stderr)
+                String::from_utf8_lossy(&configure_output.stderr)
             );
             return Err(());
         };
 
-        println!("./make");
-        let make = process::Command::new("make")
-            .arg("-j")
-            .arg(num_cpus::get().to_string())
+        let make = vec![
+            "make".to_owned(),
+            "-j".to_owned(),
+            num_cpus::get().to_string(),
+        ];
+        println!("[2/3] {}", make.join(" "));
+        let make_output = process::Command::new(&make[0])
+            .args(&make[1..])
             .current_dir(&src_dir)
             .output()
             .unwrap();
-        if !make.status.success() {
-            println!("make failed: {}", String::from_utf8_lossy(&make.stderr));
+        if !make_output.status.success() {
+            println!(
+                "make failed: {}",
+                String::from_utf8_lossy(&make_output.stderr)
+            );
             return Err(());
         };
 
-        println!("./make install");
-        let make_install = process::Command::new("make")
-            .arg("install")
+        let install = vec!["make".to_owned(), "install".to_owned()];
+        println!("[3/3] {}", install.join(" "));
+        let install_output = process::Command::new(&install[0])
+            .args(&install[1..])
             .current_dir(&src_dir)
             .output()
             .unwrap();
-        if !make_install.status.success() {
+        if !install_output.status.success() {
             println!(
                 "make install: {}",
-                String::from_utf8_lossy(&make_install.stderr)
+                String::from_utf8_lossy(&install_output.stderr)
             );
             return Err(());
         };
