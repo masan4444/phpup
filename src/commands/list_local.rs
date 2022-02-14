@@ -1,4 +1,5 @@
 use super::{Command, Config};
+use crate::decorized::Decorized;
 use crate::version;
 use crate::version::Local;
 use crate::version::Version;
@@ -30,7 +31,11 @@ impl Command for ListLocal {
         for local_version in local_versions {
             let installed = true;
             let used = Some(&local_version) == current_version.as_ref();
-            println!("{}", local_version.to_string_by(installed, used, config))
+            println!("{}", local_version.to_string_by(installed, used))
+        }
+
+        for (alias, linked_version) in version::alias::read_aliases_dir(config).sorted() {
+            println!("{}@ -> {}", alias.decorized(), linked_version.decorized())
         }
         Ok(())
     }

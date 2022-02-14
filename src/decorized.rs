@@ -18,6 +18,13 @@ impl Decorized for crate::version::Version {
         with_prefix.color(Self::Color::color())
     }
 }
+impl Decorized for crate::version::Local {
+    type Color = color::Cyan;
+    fn decorized_with_prefix(&self) -> colored::ColoredString {
+        let with_prefix = format!("PHP {}", self);
+        with_prefix.color(Self::Color::color())
+    }
+}
 impl Decorized for crate::version::Alias {
     type Color = color::Cyan;
 }

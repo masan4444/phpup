@@ -41,14 +41,6 @@ impl Command for Uninstall {
             version_dir.display().decorized()
         );
 
-        if let Some(aliases) = config.aliases().get(&uninstall_version) {
-            let aliases_dir = &config.aliases_dir();
-            for alias in aliases {
-                let alias_symlink = alias.symlink_path(&aliases_dir);
-                fs::remove_file(&alias_symlink).expect("Can't remove alias symbolic link");
-                println!("Alias {} was removed successfully", alias.decorized());
-            }
-        }
         Ok(())
     }
 }

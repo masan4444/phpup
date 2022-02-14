@@ -79,7 +79,7 @@ impl Command for ListRemote {
                 let installed = installed_versions.contains(&remote_version);
                 let remote_version = Local::Installed(remote_version);
                 let used = Some(&remote_version) == current_version.as_ref();
-                println!("{}", remote_version.to_string_by(installed, used, config))
+                println!("{}", remote_version.to_string_by(installed, used))
             }
         }
         Ok(())

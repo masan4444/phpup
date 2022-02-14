@@ -1,12 +1,12 @@
 use super::{Command, Config, ConfigError};
-use crate::decorized::{color::Color, Decorized};
+use crate::decorized::Decorized;
 use crate::symlink;
 use crate::version;
 use crate::version::Alias;
+use crate::version::Local;
 use crate::version::Version;
 use clap;
-use colored::Colorize;
-use derive_more::Display;
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use thiserror::Error;
@@ -27,17 +27,17 @@ pub struct Use {
     quiet: bool,
 }
 
-#[derive(Debug, Display)]
+#[derive(Debug)]
 enum RequestVersion {
-    Version(Version),
+    Installed(Version),
     Alias(Alias),
     System,
 }
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Can't find installed version '{0}'")]
-    NotInstalled(Version),
+    #[error("Can't find installed version '{version}' {source}")]
+    NotInstalled { version: Version, source: Source },
 
     #[error(transparent)]
     NoMultiShellPath(#[from] ConfigError),
@@ -47,9 +47,6 @@ pub enum Error {
 
     #[error("Can't detect a version: {0}")]
     NoVersionFromFile(#[from] version::file::Error),
-
-    #[error("Can't find installed version '{0}', specified by '{1}'")]
-    NotInstalledFromFile(Version, PathBuf),
 
     #[error("Can't find a system version")]
     NoSystemVersion,
@@ -67,32 +64,22 @@ impl Command for Use {
     type Error = Error;
 
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let use_version = match &self.request_version {
+        let (use_version, source) = match &self.request_version {
             Some(request_version) => match request_version {
-                RequestVersion::Version(version) => version::latest_installed_by(version, config)
-                    .ok_or(Error::NotInstalled(*version))?,
+                RequestVersion::Installed(version) => {
+                    (Local::Installed(*version), Source::Installed(*version))
+                }
                 RequestVersion::Alias(alias) => {
-                    let (_, version) = alias.resolve(config.aliases_dir())?;
+                    let version = alias.resolve(config.aliases_dir())?;
                     outln!(
                         !self.quiet,
-                        "Resolve alias {} -> {}",
+                        "Resolve alias {}@ -> {}",
                         alias.decorized(),
-                        version.decorized_with_prefix()
+                        version.decorized()
                     );
-                    version
+                    (version, Source::Alias(alias.clone()))
                 }
-                RequestVersion::System => {
-                    let system_path = version::system::path().ok_or(Error::NoSystemVersion)?;
-                    replace_multishell_path(&system_path.parent().unwrap(), config)?;
-
-                    outln!(
-                        !self.quiet,
-                        "Using PHP {} -> {}",
-                        "system".color(<Version as Decorized>::Color::color()),
-                        system_path.display().decorized()
-                    );
-                    return Ok(());
-                }
+                RequestVersion::System => (Local::System, Source::System),
             },
             None => {
                 let info = match self.version_file.get_version_info() {
@@ -105,15 +92,32 @@ impl Command for Use {
                     info.version.decorized(),
                     info.filepath.display().decorized()
                 );
-                version::latest_installed_by(&info.version, config)
-                    .ok_or(Error::NotInstalledFromFile(info.version, info.filepath))?
+                (Local::Installed(info.version), Source::File(info.filepath))
             }
         };
 
-        let version_dir = config.versions_dir().join(use_version.to_string());
-        replace_multishell_path(version_dir.join("bin"), config)?;
+        match use_version {
+            Local::Installed(version) => {
+                let use_version = version::latest_installed_by(&version, config)
+                    .ok_or(Error::NotInstalled { version, source })?;
+                let version_dir = config.versions_dir().join(use_version.to_string());
+                replace_multishell_path(version_dir.join("bin"), config)?;
 
-        outln!(!self.quiet, "Using {}", use_version.decorized_with_prefix());
+                outln!(!self.quiet, "Using {}", use_version.decorized_with_prefix());
+            }
+            Local::System => {
+                let system_path = version::system::path().ok_or(Error::NoSystemVersion)?;
+                replace_multishell_path(&system_path.parent().unwrap(), config)?;
+
+                outln!(
+                    !self.quiet,
+                    "Using {} -> {}",
+                    Local::System.decorized_with_prefix(),
+                    system_path.display().decorized()
+                );
+            }
+        }
+
         Ok(())
     }
 }
@@ -132,8 +136,27 @@ impl FromStr for RequestVersion {
             Ok(Self::System)
         } else {
             s.parse::<Version>()
-                .map(Self::Version)
+                .map(Self::Installed)
                 .or_else(|_| Ok(Self::Alias(s.parse().unwrap())))
+        }
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum Source {
+    Installed(Version),
+    Alias(Alias),
+    File(PathBuf),
+    System,
+}
+
+impl Display for Source {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Source::Installed(_) => String::new().fmt(f),
+            Source::Alias(alias) => format!("specified by alias '{}'", alias).fmt(f),
+            Source::File(path) => format!("specified by version-file '{}'", path.display()).fmt(f),
+            Source::System => String::new().fmt(f),
         }
     }
 }

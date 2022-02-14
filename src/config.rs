@@ -1,7 +1,4 @@
-use crate::version::Alias;
-use crate::version::Version;
 use clap;
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -49,25 +46,6 @@ impl Config {
         fs::create_dir_all(&aliases_dir)
             .unwrap_or_else(|_| panic!("Can't create alias dirctory: {:?}", aliases_dir));
         aliases_dir
-    }
-    pub fn aliases(&self) -> HashMap<Version, Vec<Alias>> {
-        let aliases_dir = self.aliases_dir();
-        let mut map: HashMap<Version, Vec<Alias>> = HashMap::new();
-        fs::read_dir(&aliases_dir)
-            .unwrap()
-            .flatten()
-            .flat_map(|path| path.path().file_name().map(ToOwned::to_owned))
-            .flat_map(|dir_os_str| dir_os_str.into_string())
-            .flat_map(|dir_str| dir_str.parse::<Alias>())
-            .flat_map(|alias: Alias| {
-                alias
-                    .resolve(&aliases_dir)
-                    .map(|(_, version)| (version, alias))
-            })
-            .for_each(|(version, alias)| {
-                map.entry(version).or_default().push(alias);
-            });
-        map
     }
 
     #[cfg(test)]

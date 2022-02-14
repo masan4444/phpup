@@ -51,13 +51,14 @@ fn create_symlink() -> std::path::PathBuf {
     std::fs::create_dir_all(&temp_dir).expect("Can't create tempdir!");
 
     // TODO: default version
-    // symlink::link(&default_version_dir, &symlink_path).expect("Can't create symlink!");
-    loop {
+    let symlink_path = loop {
         let symlink_path = temp_dir.join(generate_symlink_path());
         if !symlink_path.exists() {
             break symlink_path;
         }
-    }
+    };
+    // symlink::link(&default_version_dir, &symlink_path).expect("Can't create symlink!");
+    symlink_path
 }
 
 fn generate_symlink_path() -> PathBuf {
