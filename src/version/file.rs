@@ -1,4 +1,4 @@
-use super::semantic::{ParseError, Version};
+use super::Local;
 use pathdiff::diff_paths;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -27,14 +27,14 @@ pub enum Error {
     FailedParseVersion {
         filepath: PathBuf,
         #[source]
-        source: ParseError,
+        source: super::semantic::ParseError,
     },
     #[error("Can't find a version file: \"{0}\"")]
     NoVersionFile(PathBuf),
 }
 
 pub struct FileInfo {
-    pub version: Version,
+    pub version: Local,
     pub filepath: PathBuf,
 }
 impl FileInfo {
@@ -71,7 +71,7 @@ impl File {
             .map(|string| {
                 string
                     .trim()
-                    .parse::<Version>()
+                    .parse::<Local>()
                     .map_err(|source| Error::FailedParseVersion {
                         filepath: filepath.clone(),
                         source,

@@ -92,7 +92,7 @@ impl Command for Use {
                     info.version.decorized(),
                     info.filepath.display().decorized()
                 );
-                (Local::Installed(info.version), Source::File(info.filepath))
+                (info.version, Source::File(info.filepath))
             }
         };
 

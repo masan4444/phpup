@@ -7,7 +7,7 @@ use clap;
 use colored::Colorize;
 use flate2::read::GzDecoder;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process;
 use tar::Archive;
 use thiserror::Error;
@@ -27,6 +27,9 @@ pub enum Error {
 
     #[error("Can't detect a version: {0}")]
     NoVersionFromFile(#[from] version::file::Error),
+
+    #[error("Can't specify the system version by {0}")]
+    SpecifiedSystemVersion(PathBuf),
 }
 
 impl Command for Install {
@@ -97,12 +100,16 @@ impl Command for Install {
 impl Install {
     fn get_version_from_version_file(&self) -> Result<Version, Error> {
         let version_info = self.version_file.get_version_info()?;
-        println!(
-            "{} has been specified from {}",
-            version_info.version.decorized(),
-            version_info.filepath.display().decorized()
-        );
-        Ok(version_info.version)
+        if let Some(version) = version_info.version.as_version() {
+            println!(
+                "{} has been specified from {}",
+                version.decorized(),
+                version_info.filepath.display().decorized()
+            );
+            Ok(version)
+        } else {
+            Err(Error::SpecifiedSystemVersion(version_info.filepath))
+        }
     }
 
     // TODO: checksum
