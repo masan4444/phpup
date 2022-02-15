@@ -22,6 +22,10 @@ const CURL_PATH: &str = if cfg!(target_os = "windows") {
     "curl"
 };
 
+pub struct Header {
+    pub content_length: Option<usize>,
+}
+
 pub fn get_as_slice(url: &str) -> Result<Vec<u8>, Error> {
     let command = [CURL_PATH, url, "-sS"];
     let output = Command::new(command[0])
@@ -51,6 +55,32 @@ pub fn get_as_reader(url: &str) -> Result<(ChildStdout, ChildStderr), Error> {
             source,
         })?;
     Ok((process.stdout.unwrap(), process.stderr.unwrap()))
+}
+
+pub fn get_header(url: &str) -> Result<Header, Error> {
+    let command = [CURL_PATH, url, "-sSI"];
+    let output = Command::new(command[0])
+        .args(&command[1..])
+        .output()
+        .map_err(|source| Error::FailedExecute {
+            command: command.join(" "),
+            source,
+        })?;
+    let output = if output.status.success() {
+        String::from_utf8(output.stdout).unwrap()
+    } else {
+        return Err(Error::ExitFailed(
+            command.join(" "),
+            String::from_utf8(output.stderr).unwrap(),
+        ));
+    };
+
+    let mut lines = output.lines();
+    let content_length = lines
+        .find(|line| line.starts_with("content-length"))
+        .and_then(|line| line.split(": ").last())
+        .and_then(|length| length.parse::<usize>().ok());
+    Ok(Header { content_length })
 }
 
 #[cfg(test)]
