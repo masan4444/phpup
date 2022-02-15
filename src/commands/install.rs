@@ -87,7 +87,7 @@ impl Command for Install {
 
         let (tar_gz, file_size) = download(&release.source_url(), &download_dir)?;
         let source_dir = unpack(&tar_gz, file_size, &download_dir)?;
-        build(&source_dir, &install_dir).unwrap();
+        build(&source_dir, &install_dir)?;
         println!(
             "{:>12} {}",
             "Installed".green().bold(),
