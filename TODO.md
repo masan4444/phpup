@@ -19,7 +19,7 @@
 ## Error handling
 
 - [ ] `install`
-- [ ] curl.rs
+- [x] curl.rs
 - [x] if `$MULTISHELL_PATH` is unset, return message: Need to run `eval $(phpup init)`
 
 ## Performance
