@@ -14,8 +14,13 @@ static PROGRESS_STYLE: Lazy<ProgressStyle> = Lazy::new(|| {
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("{0}")]
-    Other(String),
+    #[error("Can't execute the command because {0}")]
+    FailedExecute(#[from] std::io::Error),
+
+    #[error(
+        "build error\n=== Please follow the messages below to resolve dependencies, etc. ===\n\n{0}"
+    )]
+    ExitFailed(String),
 }
 
 pub trait Command {
@@ -25,7 +30,7 @@ pub trait Command {
     fn command_line(&self) -> String {
         format!("{} {}", self.command(), self.args().join(" "))
     }
-    fn wait(&self, handle_wait: impl Fn()) -> std::process::Output {
+    fn wait(&self, handle_wait: impl Fn()) -> Result<std::process::Output, std::io::Error> {
         let command = self.command();
         let args = self.args();
         let current_dir = self.current_dir().to_owned();
@@ -36,8 +41,7 @@ pub trait Command {
                 std::process::Command::new(command)
                     .args(args)
                     .current_dir(current_dir)
-                    .output()
-                    .unwrap(),
+                    .output(),
             )
         });
         loop {
@@ -54,12 +58,12 @@ pub trait Command {
             .with_prefix(format!("[{}/3]", prefix))
             .with_message(self.command_line());
 
-        let output = self.wait(|| pb.inc(1));
+        let output = self.wait(|| pb.inc(1))?;
         pb.finish();
         if output.status.success() {
             Ok(())
         } else {
-            Err(Error::Other(String::from_utf8(output.stderr).unwrap()))
+            Err(Error::ExitFailed(String::from_utf8(output.stderr).unwrap()))
         }
     }
 }
