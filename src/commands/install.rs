@@ -32,6 +32,11 @@ pub struct Install {
 
     #[clap(flatten)]
     version_file: version::File,
+
+    /// Specify configure options used by the PHP configure scripts.
+    /// To specify two or more options, enclose them with quotation marks.
+    #[clap(long, env = "PHPUP_CONFIGURE_OPTS", allow_hyphen_values = true)]
+    configure_opts: String,
 }
 
 #[derive(Error, Debug)]
@@ -87,7 +92,11 @@ impl Command for Install {
 
         let (tar_gz, file_size) = download(&release.source_url(), &download_dir)?;
         let source_dir = unpack(&tar_gz, file_size, &download_dir)?;
-        build(&source_dir, &install_dir)?;
+        build(
+            &source_dir,
+            &install_dir,
+            self.configure_opts.split_whitespace(),
+        )?;
         println!(
             "{:>12} {}",
             "Installed".green().bold(),
@@ -174,7 +183,11 @@ fn unpack(
 }
 
 #[cfg(unix)]
-fn build(src_dir: impl AsRef<Path>, dist_dir: impl AsRef<Path>) -> Result<(), Error> {
+fn build<'a>(
+    src_dir: impl AsRef<Path>,
+    dist_dir: impl AsRef<Path>,
+    configure_opts: impl Iterator<Item = &'a str>,
+) -> Result<(), Error> {
     use make::Command;
 
     println!(
@@ -185,11 +198,11 @@ fn build(src_dir: impl AsRef<Path>, dist_dir: impl AsRef<Path>) -> Result<(), Er
     let current_dir = src_dir.as_ref();
 
     make::Configure {
-        current_dir,
-        dist_dir: dist_dir.as_ref(),
+        prefix: dist_dir.as_ref(),
+        opts: configure_opts.collect(),
     }
-    .run(1)?;
-    make::Make { current_dir }.run(2)?;
-    make::Install { current_dir }.run(3)?;
+    .run(current_dir)?;
+    make::Make {}.run(current_dir)?;
+    make::Install {}.run(current_dir)?;
     Ok(())
 }

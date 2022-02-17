@@ -1,4 +1,5 @@
 use indicatif::{ProgressBar, ProgressStyle};
+use itertools::Itertools;
 use once_cell::sync::Lazy;
 use std::path::Path;
 use std::sync::mpsc::channel;
@@ -26,14 +27,18 @@ pub enum Error {
 pub trait Command {
     fn command(&self) -> &'static str;
     fn args(&self) -> Vec<String>;
-    fn current_dir(&self) -> &Path;
+    fn order(&self) -> usize;
     fn command_line(&self) -> String {
         format!("{} {}", self.command(), self.args().join(" "))
     }
-    fn wait(&self, handle_wait: impl Fn()) -> Result<std::process::Output, std::io::Error> {
+    fn wait(
+        &self,
+        current_dir: impl AsRef<Path>,
+        handle_wait: impl Fn(),
+    ) -> Result<std::process::Output, std::io::Error> {
         let command = self.command();
         let args = self.args();
-        let current_dir = self.current_dir().to_owned();
+        let current_dir = current_dir.as_ref().to_path_buf();
 
         let (tx, rx) = channel();
         thread::spawn(move || {
@@ -52,13 +57,13 @@ pub trait Command {
             thread::sleep(Duration::from_millis(50));
         }
     }
-    fn run(&self, prefix: usize) -> Result<(), Error> {
+    fn run(&self, current_dir: impl AsRef<Path>) -> Result<(), Error> {
         let pb = ProgressBar::new(0)
             .with_style(PROGRESS_STYLE.clone())
-            .with_prefix(format!("[{}/3]", prefix))
+            .with_prefix(format!("[{}/3]", self.order()))
             .with_message(self.command_line());
 
-        let output = self.wait(|| pb.inc(1))?;
+        let output = self.wait(current_dir, || pb.inc(1))?;
         pb.finish();
         if output.status.success() {
             Ok(())
@@ -69,47 +74,47 @@ pub trait Command {
 }
 
 pub struct Configure<'a> {
-    pub current_dir: &'a Path,
-    pub dist_dir: &'a Path,
+    pub prefix: &'a Path,
+    pub opts: Vec<&'a str>,
 }
 impl Command for Configure<'_> {
     fn command(&self) -> &'static str {
         "./configure"
     }
     fn args(&self) -> Vec<String> {
-        vec![format!("--prefix={}", self.dist_dir.display())]
+        self.opts
+            .iter()
+            .map(|&s| s.to_owned())
+            .chain([format!("--prefix={}", self.prefix.display())])
+            .collect_vec()
     }
-    fn current_dir(&self) -> &Path {
-        self.current_dir
+    fn order(&self) -> usize {
+        1
     }
 }
 
-pub struct Make<'a> {
-    pub current_dir: &'a Path,
-}
-impl Command for Make<'_> {
+pub struct Make {}
+impl Command for Make {
     fn command(&self) -> &'static str {
         "make"
     }
     fn args(&self) -> Vec<String> {
         vec!["-j".to_owned(), num_cpus::get().to_string()]
     }
-    fn current_dir(&self) -> &Path {
-        self.current_dir
+    fn order(&self) -> usize {
+        2
     }
 }
 
-pub struct Install<'a> {
-    pub current_dir: &'a Path,
-}
-impl Command for Install<'_> {
+pub struct Install {}
+impl Command for Install {
     fn command(&self) -> &'static str {
         "make"
     }
     fn args(&self) -> Vec<String> {
         vec!["install".to_owned()]
     }
-    fn current_dir(&self) -> &Path {
-        self.current_dir
+    fn order(&self) -> usize {
+        3
     }
 }
