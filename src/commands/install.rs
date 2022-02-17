@@ -1,3 +1,6 @@
+mod make;
+mod progress_reader;
+
 use super::{Command, Config};
 use crate::curl;
 use crate::decorized::Decorized;
@@ -6,11 +9,22 @@ use crate::version::{self, Version};
 use clap;
 use colored::Colorize;
 use flate2::read::GzDecoder;
+use indicatif::{ProgressBar, ProgressStyle};
+use once_cell::sync::Lazy;
+use progress_reader::ProgressReader;
 use std::fs;
+use std::io::{BufReader, BufWriter, Read};
 use std::path::{Path, PathBuf};
-use std::process;
 use tar::Archive;
 use thiserror::Error;
+
+static PROGRESS_STYLE: Lazy<ProgressStyle> = Lazy::new(|| {
+    let progress_template =
+        "{prefix:>12.cyan.bold} [{bar:25}] {bytes}/{total_bytes} ({eta}) {wide_msg}";
+    ProgressStyle::default_bar()
+        .template(progress_template)
+        .progress_chars("=> ")
+});
 
 #[derive(clap::Parser, Debug)]
 pub struct Install {
@@ -18,22 +32,37 @@ pub struct Install {
 
     #[clap(flatten)]
     version_file: version::File,
+
+    /// Specify configure options used by the PHP configure scripts.
+    /// To specify two or more options, enclose them with quotation marks.
+    #[clap(long, env = "PHPUP_CONFIGURE_OPTS", allow_hyphen_values = true)]
+    configure_opts: String,
 }
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error(transparent)]
-    FailedFetchRelease(#[from] release::FetchError),
-
     #[error("Can't detect a version: {0}")]
     NoVersionFromFile(#[from] version::file::Error),
 
     #[error("Can't specify the system version by {0}")]
     SpecifiedSystemVersion(PathBuf),
+
+    #[error(transparent)]
+    FailedFetchRelease(#[from] release::FetchError),
+
+    #[error(transparent)]
+    FailedDownload(#[from] curl::Error),
+
+    #[error(transparent)]
+    FailedMake(#[from] make::Error),
+
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 }
 
 impl Command for Install {
     type Error = Error;
+
     fn run(&self, config: &Config) -> Result<(), Error> {
         let request_version = self
             .version
@@ -41,7 +70,6 @@ impl Command for Install {
 
         let release = release::fetch_latest(request_version)?;
         let install_version = release.version.unwrap();
-        let url = release.source_url();
 
         if version::latest_installed_by(&request_version, config) == Some(install_version) {
             println!(
@@ -51,46 +79,27 @@ impl Command for Install {
             );
             return Ok(());
         }
-
-        // .phpup/versions/php/3.1.4/.downloads-aaa/php-3.1.4
-        //                    |     |              |        |
-        //         versions_dir     |              |        |
-        //                install_dir              |        |
-        //                              download_dir        |
-        //                                         source_dir
-        //
-        // .phpup/versions/php/3.1.4/{bin,include,lib,php,var}
-
-        let install_dir = config.versions_dir().join(install_version.to_string());
-        fs::create_dir_all(&install_dir).unwrap();
         println!(
-            "{} {}",
+            "{:>12} {}",
             "Installing".green().bold(),
             install_version.decorized_with_prefix()
         );
 
+        let install_dir = config.versions_dir().join(install_version.to_string());
         let download_dir = tempfile::Builder::new()
-            .prefix(".download-")
-            .tempdir_in(&install_dir)
-            .expect("Can't create a temporary directory to download to");
-        println!("{} {}", "Downloading".green().bold(), url);
-        Self::download_and_unpack(&url, &download_dir);
+            .prefix(".downloads-")
+            .tempdir_in(&config.base_dir())?;
 
-        let source_dir = fs::read_dir(&download_dir.path())
-            .unwrap()
-            .next()
-            .unwrap()
-            .unwrap()
-            .path();
+        let (tar_gz, file_size) = download(&release.source_url(), &download_dir)?;
+        let source_dir = unpack(&tar_gz, file_size, &download_dir)?;
+        build(
+            &source_dir,
+            &install_dir,
+            self.configure_opts.split_whitespace(),
+        )?;
         println!(
-            "{} {}",
-            "Building from".green().bold(),
-            source_dir.display().decorized()
-        );
-        Self::build(&source_dir, &install_dir).unwrap();
-        println!(
-            "{} {}",
-            "Installed to".green().bold(),
+            "{:>12} {}",
+            "Installed".green().bold(),
             install_dir.display().decorized()
         );
         Ok(())
@@ -111,58 +120,89 @@ impl Install {
             Err(Error::SpecifiedSystemVersion(version_info.filepath))
         }
     }
+}
 
-    // TODO: checksum
-    fn download_and_unpack(url: &str, path: impl AsRef<Path>) {
-        let response = curl::get_as_reader(url);
-        let gz_decoder = GzDecoder::new(response);
-        let mut tar_archive = Archive::new(gz_decoder);
-        tar_archive.unpack(path).unwrap();
+// TODO: checksum
+fn download(url: &str, dir: impl AsRef<Path>) -> Result<(PathBuf, u64), Error> {
+    let curl::Header { content_length } = curl::get_header(url)?;
+    let progress_bar = ProgressBar::new(content_length.unwrap() as u64)
+        .with_style(PROGRESS_STYLE.clone())
+        .with_prefix("Downloading")
+        .with_message(url.to_owned());
+
+    let (stdout, mut stderr) = curl::get_as_reader(url)?;
+    let mut progress_reader = ProgressReader::new(stdout, &progress_bar);
+
+    let download_file_path = dir.as_ref().join(url.rsplit('/').next().unwrap());
+    let download_file = fs::File::create(&download_file_path)?;
+    let mut file_writer = BufWriter::new(&download_file);
+
+    std::io::copy(&mut progress_reader, &mut file_writer)?;
+
+    let download_size = download_file.metadata()?.len();
+    if download_size > 0 {
+        progress_bar.finish_and_clear();
+        println!("{:>12} {}", "Downloaded".green().bold(), url);
+        Ok((download_file_path, download_size))
+    } else {
+        let mut err_msg = String::new();
+        stderr.read_to_string(&mut err_msg)?;
+        Err(Error::FailedDownload(curl::Error::ExitFailed(
+            "curl".to_owned(),
+            err_msg,
+        )))
     }
+}
 
-    fn build(src_dir: impl AsRef<Path>, dist_dir: impl AsRef<Path>) -> Result<(), ()> {
-        let mut command = process::Command::new("sh");
+fn unpack(
+    tar_gz: impl AsRef<Path>,
+    file_size: u64,
+    dst_dir: impl AsRef<Path>,
+) -> Result<PathBuf, Error> {
+    let progress_bar = ProgressBar::new(file_size)
+        .with_style(PROGRESS_STYLE.clone())
+        .with_prefix("Unpacking")
+        .with_message(tar_gz.as_ref().to_str().unwrap().to_owned());
 
-        println!("./configure");
-        command
-            .arg("configure")
-            .arg(format!("--prefix={}", dist_dir.as_ref().display()));
-        // .args(configure_opts);
+    let file_reader = BufReader::new(fs::File::open(&tar_gz)?);
+    let progress_reader = ProgressReader::new(file_reader, &progress_bar);
+    let gz_decoder = GzDecoder::new(progress_reader);
+    let mut tar_archive = Archive::new(gz_decoder);
 
-        let configure = command.current_dir(&src_dir).output().unwrap();
-        if !configure.status.success() {
-            println!(
-                "configure failed: {}",
-                String::from_utf8_lossy(&configure.stderr)
-            );
-            return Err(());
-        };
+    tar_archive.unpack(&dst_dir)?;
+    progress_bar.finish_and_clear();
 
-        println!("./make");
-        let make = process::Command::new("make")
-            .arg("-j")
-            .arg(num_cpus::get().to_string())
-            .current_dir(&src_dir)
-            .output()
-            .unwrap();
-        if !make.status.success() {
-            println!("make failed: {}", String::from_utf8_lossy(&make.stderr));
-            return Err(());
-        };
+    println!(
+        "{:>12} {}",
+        "Unpacked".green().bold(),
+        tar_gz.as_ref().display()
+    );
+    let tar_gz_filename = tar_gz.as_ref().file_name().unwrap().to_str().unwrap();
+    let unpaked_dirname = &tar_gz_filename[..tar_gz_filename.len() - ".tar.gz".len()];
+    Ok(dst_dir.as_ref().join(unpaked_dirname))
+}
 
-        println!("./make install");
-        let make_install = process::Command::new("make")
-            .arg("install")
-            .current_dir(&src_dir)
-            .output()
-            .unwrap();
-        if !make_install.status.success() {
-            println!(
-                "make install: {}",
-                String::from_utf8_lossy(&make_install.stderr)
-            );
-            return Err(());
-        };
-        Ok(())
+#[cfg(unix)]
+fn build<'a>(
+    src_dir: impl AsRef<Path>,
+    dist_dir: impl AsRef<Path>,
+    configure_opts: impl Iterator<Item = &'a str>,
+) -> Result<(), Error> {
+    use make::Command;
+
+    println!(
+        "{:>12} {}",
+        "Building".cyan().bold(),
+        src_dir.as_ref().display()
+    );
+    let current_dir = src_dir.as_ref();
+
+    make::Configure {
+        prefix: dist_dir.as_ref(),
+        opts: configure_opts.collect(),
     }
+    .run(current_dir)?;
+    make::Make {}.run(current_dir)?;
+    make::Install {}.run(current_dir)?;
+    Ok(())
 }

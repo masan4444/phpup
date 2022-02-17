@@ -146,29 +146,47 @@ struct ProcessInfo {
 }
 #[derive(Debug, Error)]
 pub enum ProcessInfoError {
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    #[error("failed to exec 'ps' command")]
-    ExitFailed,
+    #[error("Can't execute `{command}` because {source}")]
+    FailedExecute {
+        command: String,
+        #[source]
+        source: std::io::Error,
+    },
+
+    #[error("failed to exec '{0}' command")]
+    ExitFailed(String),
+
     #[error("can't parse 'ps' command output: {0}")]
     Parse(String),
+
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 }
 #[cfg(unix)]
 fn get_process_info(pid: u32) -> Result<ProcessInfo, ProcessInfoError> {
     use std::io::{BufRead, BufReader};
     use std::process::Command;
 
-    let mut child = Command::new("ps")
-        .arg("-o")
-        .arg("ppid=,comm=")
-        .arg(pid.to_string())
+    let ps = [
+        "ps".to_owned(),
+        "-o".to_owned(),
+        "ppid=,comm=".to_owned(),
+        pid.to_string(),
+    ];
+
+    let mut child = Command::new(&ps[0])
+        .args(&ps[1..])
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::null())
-        .spawn()?;
+        .spawn()
+        .map_err(|source| ProcessInfoError::FailedExecute {
+            command: ps.join(" "),
+            source,
+        })?;
 
     match child.wait() {
         Ok(status) if status.success() => {}
-        _ => return Err(ProcessInfoError::ExitFailed),
+        _ => return Err(ProcessInfoError::ExitFailed(ps.join(" "))),
     }
 
     let mut line = String::new();

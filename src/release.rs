@@ -11,6 +11,10 @@ use thiserror::Error;
 pub enum FetchError {
     #[error("Can't find releases that matches {0}")]
     NotFoundRelease(Version),
+
+    #[error(transparent)]
+    CurlError(#[from] curl::Error),
+
     #[error("Receive error message from release site: {0}")]
     Other(String),
 }
@@ -28,7 +32,7 @@ fn fetch_and_parse(
         max.map(|max| format!("&max={}", max)).unwrap_or_default(),
     );
     let url = &format!("{}{}", base_url, query);
-    let json = curl::get_as_slice(url);
+    let json = curl::get_as_slice(url)?;
 
     let resp: Response =
         serde_json::from_slice(&json).unwrap_or_else(|_| panic!("Can't parse json from {}", url));
@@ -294,42 +298,5 @@ mod tests {
             latest_release.unwrap().version.unwrap(),
             "7.0.33".parse().unwrap()
         );
-    }
-}
-
-mod github {
-    use octocrab;
-    #[allow(unused)]
-    async fn fetch_versions_from_github() {
-        let instance = octocrab::instance();
-
-        let page = instance
-            .repos("php", "php-src")
-            .list_tags()
-            .per_page(100u8)
-            .send()
-            .await
-            .unwrap();
-        println!("number of pages: {}", page.number_of_pages().unwrap());
-
-        let tags = instance
-            .all_pages::<octocrab::models::repos::Tag>(page)
-            .await
-            .unwrap();
-        println!("number of tags: {}", tags.len());
-
-        let tag_names = tags
-            .iter()
-            .map(|tag| tag.name.clone())
-            .collect::<Vec<String>>();
-
-        for tag_name in &tag_names {
-            println!("{}", tag_name)
-        }
-
-        //     use tokio::runtime::Runtime;
-        //     Runtime::new()
-        //         .unwrap()
-        //         .block_on(fetch_versions_from_github());
     }
 }
