@@ -36,7 +36,7 @@ pub struct Install {
     /// Specify configure options used by the PHP configure scripts.
     /// To specify two or more options, enclose them with quotation marks.
     #[clap(long, env = "PHPUP_CONFIGURE_OPTS", allow_hyphen_values = true)]
-    configure_opts: String,
+    configure_opts: Option<String>,
 }
 
 #[derive(Error, Debug)]
@@ -95,7 +95,10 @@ impl Command for Install {
         build(
             &source_dir,
             &install_dir,
-            self.configure_opts.split_whitespace(),
+            self.configure_opts
+                .as_ref()
+                .unwrap_or(&"".to_owned())
+                .split_whitespace(),
         )?;
         println!(
             "{:>12} {}",
