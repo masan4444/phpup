@@ -139,7 +139,7 @@ impl FromStr for Version {
         if s == "3.0.x (latest)" {
             return Ok(Version::from_numbers(
                 3,
-                Some(9),
+                Some(0),
                 Some(if cfg!(target_os = "windows") { 17 } else { 18 }),
             ));
         }

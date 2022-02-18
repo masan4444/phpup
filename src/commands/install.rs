@@ -48,6 +48,9 @@ pub enum Error {
     #[error("Can't specify the system version by {0}")]
     SpecifiedSystemVersion(PathBuf),
 
+    #[error("PHP3 installation is not supported yet")]
+    UnsupportedPHP3,
+
     #[error(transparent)]
     FailedFetchRelease(#[from] release::FetchError),
 
@@ -71,6 +74,10 @@ impl Command for Install {
         let request_version = self
             .version
             .map_or_else(|| self.get_version_from_version_file(), Ok)?;
+
+        if request_version.major_version() == 3 {
+            return Err(Error::UnsupportedPHP3);
+        }
 
         let release = release::fetch_latest(request_version)?;
         let install_version = release.version.unwrap();
