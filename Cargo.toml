@@ -1,7 +1,13 @@
 [package]
 name = "phpup"
 version = "0.1.0"
+authors = ["Masanori Ueno <masanori0213@gmail.com>"]
+license = "GPL-3.0"
 edition = "2021"
+repository = "https://github.com/masan4444/phpup"
+description = "Fast and Simple PHP version manager"
+keywords = ["php", "version", "manager"]
+categories = ["command-line-utilities", "development-tools"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

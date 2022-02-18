@@ -1,6 +1,6 @@
-# PHP-UP: Fast and Simple PHP version manager
+# PHP-UP - Fast and Simple PHP version manager
 
-:zap: Fast and simple PHP version manager, written in rust
+:zap: PHP version manager written in rust
 
 ## :sparkles: Features
 
