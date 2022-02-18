@@ -119,22 +119,21 @@ enum Tag {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
 enum Source {
-    File {
-        filename: String,
-        name: String,
-        #[serde(flatten)]
-        checksum: Option<Hash>,
-        // TODO: Option<NaiveTime>
-        date: Option<String>,
-    },
-    Link {
-        link: String,
-        name: String,
-    },
+    File(File),
+    Link { link: String, name: String },
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct File {
+    filename: String,
+    name: String,
+    #[serde(flatten)]
+    checksum: Option<Hash>,
+    // TODO: Option<NaiveTime>
+    date: Option<String>,
 }
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all(deserialize = "lowercase", serialize = "lowercase"))]
-enum Hash {
+pub enum Hash {
     SHA256(String),
     MD5(String),
 }
@@ -150,25 +149,25 @@ pub enum Support {
 }
 
 impl Release {
-    fn source_filename(&self, extention: &str) -> String {
-        self.source
-            .iter()
-            .find_map(|source| match source {
-                Source::File { filename, .. } if filename.ends_with(extention) => Some(filename),
-                _ => None,
-            })
-            .unwrap()
-            .to_string()
+    fn source_file(&self, extention: &str) -> Option<&File> {
+        self.source.iter().find_map(|source| match source {
+            Source::File(file) if file.filename.ends_with(extention) => Some(file),
+            _ => None,
+        })
     }
-    pub fn source_url(&self) -> String {
-        let filename = self.source_filename(".tar.gz");
-        if self.museum == Some(true) {
+    pub fn source_url(&self) -> (String, Option<&Hash>) {
+        let source_file = self.source_file(".tar.gz").unwrap();
+        let url = if self.museum == Some(true) {
             let major_version = self.version.unwrap().major_version();
-            format!("https://museum.php.net/php{}/{}", major_version, filename)
+            format!(
+                "https://museum.php.net/php{}/{}",
+                major_version, source_file.filename
+            )
         } else {
-            format!("https://www.php.net/distributions/{}", filename)
-        }
-        // format!("http://jp1.php.net/get/{}/from/this/mirror/", filename)
+            format!("https://www.php.net/distributions/{}", source_file.filename)
+            // format!("http://jp1.php.net/get/{}/from/this/mirror/", filename)
+        };
+        (url, source_file.checksum.as_ref())
     }
     pub fn calculate_support(&self) -> Support {
         let release_date = self.date;

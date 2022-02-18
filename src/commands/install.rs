@@ -4,7 +4,7 @@ mod progress_reader;
 use super::{Command, Config};
 use crate::curl;
 use crate::decorized::Decorized;
-use crate::release;
+use crate::release::{self, Hash};
 use crate::version::{self, Version};
 use clap;
 use colored::Colorize;
@@ -12,6 +12,7 @@ use flate2::read::GzDecoder;
 use indicatif::{ProgressBar, ProgressStyle};
 use once_cell::sync::Lazy;
 use progress_reader::ProgressReader;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::{BufReader, BufWriter, Read};
 use std::path::{Path, PathBuf};
@@ -53,6 +54,9 @@ pub enum Error {
     #[error(transparent)]
     FailedDownload(#[from] curl::Error),
 
+    #[error("Invalid checksum\nexptected: {expected}\ngot: {got}")]
+    InvalidChecksum { expected: String, got: String },
+
     #[error(transparent)]
     FailedMake(#[from] make::Error),
 
@@ -90,8 +94,11 @@ impl Command for Install {
             .prefix(".downloads-")
             .tempdir_in(&config.base_dir())?;
 
-        let (tar_gz, file_size) = download(&release.source_url(), &download_dir)?;
-        let source_dir = unpack(&tar_gz, file_size, &download_dir)?;
+        let (url, checksum) = release.source_url();
+
+        let tar_gz = download(&url, &download_dir)?;
+        verify(&tar_gz, checksum)?;
+        let source_dir = unpack(&tar_gz, &download_dir)?;
         build(
             &source_dir,
             &install_dir,
@@ -125,8 +132,7 @@ impl Install {
     }
 }
 
-// TODO: checksum
-fn download(url: &str, dir: impl AsRef<Path>) -> Result<(PathBuf, u64), Error> {
+fn download(url: &str, dir: impl AsRef<Path>) -> Result<PathBuf, Error> {
     let curl::Header { content_length } = curl::get_header(url)?;
     let progress_bar = ProgressBar::new(content_length.unwrap() as u64)
         .with_style(PROGRESS_STYLE.clone())
@@ -142,11 +148,10 @@ fn download(url: &str, dir: impl AsRef<Path>) -> Result<(PathBuf, u64), Error> {
 
     std::io::copy(&mut progress_reader, &mut file_writer)?;
 
-    let download_size = download_file.metadata()?.len();
-    if download_size > 0 {
+    if download_file.metadata()?.len() > 0 {
         progress_bar.finish_and_clear();
         println!("{:>12} {}", "Downloaded".green().bold(), url);
-        Ok((download_file_path, download_size))
+        Ok(download_file_path)
     } else {
         let mut err_msg = String::new();
         stderr.read_to_string(&mut err_msg)?;
@@ -157,17 +162,57 @@ fn download(url: &str, dir: impl AsRef<Path>) -> Result<(PathBuf, u64), Error> {
     }
 }
 
-fn unpack(
-    tar_gz: impl AsRef<Path>,
-    file_size: u64,
-    dst_dir: impl AsRef<Path>,
-) -> Result<PathBuf, Error> {
-    let progress_bar = ProgressBar::new(file_size)
+fn verify(filepath: impl AsRef<Path>, checksum: Option<&Hash>) -> Result<(), Error> {
+    if let Some(checksum) = checksum {
+        let file = fs::File::open(filepath)?;
+        let progress_bar = ProgressBar::new(file.metadata()?.len())
+            .with_style(PROGRESS_STYLE.clone())
+            .with_prefix("Verifying");
+        let mut file_reader = ProgressReader::new(file, &progress_bar);
+
+        let (checksum, hash, hash_type) = match checksum {
+            Hash::SHA256(checksum) => {
+                progress_bar.set_message("SHA-256 checksum");
+                let mut sha256 = Sha256::new();
+                std::io::copy(&mut file_reader, &mut sha256)?;
+                let hash = sha256.finalize();
+                (checksum, format!("{:x}", hash), "SHA-256")
+            }
+            Hash::MD5(checksum) => {
+                progress_bar.set_message("MD5 checksum");
+                let mut md5 = md5::Context::new();
+                std::io::copy(&mut file_reader, &mut md5)?;
+                let hash = md5.compute();
+                (checksum, format!("{:x}", hash), "MD5")
+            }
+        };
+        if checksum == &hash {
+            progress_bar.finish_and_clear();
+            println!("{:>12} {} checksum", "Verified".green().bold(), hash_type);
+        } else {
+            return Err(Error::InvalidChecksum {
+                expected: checksum.clone(),
+                got: hash,
+            });
+        }
+    } else {
+        println!(
+            "{:>12} {}: No checksum",
+            "Verifying".cyan().bold(),
+            "warning".yellow().bold()
+        );
+    }
+    Ok(())
+}
+
+fn unpack(tar_gz: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> Result<PathBuf, Error> {
+    let file = fs::File::open(&tar_gz)?;
+    let progress_bar = ProgressBar::new(file.metadata()?.len())
         .with_style(PROGRESS_STYLE.clone())
         .with_prefix("Unpacking")
         .with_message(tar_gz.as_ref().to_str().unwrap().to_owned());
 
-    let file_reader = BufReader::new(fs::File::open(&tar_gz)?);
+    let file_reader = BufReader::new(file);
     let progress_reader = ProgressReader::new(file_reader, &progress_bar);
     let gz_decoder = GzDecoder::new(progress_reader);
     let mut tar_archive = Archive::new(gz_decoder);
@@ -188,7 +233,7 @@ fn unpack(
 #[cfg(unix)]
 fn build<'a>(
     src_dir: impl AsRef<Path>,
-    dist_dir: impl AsRef<Path>,
+    dst_dir: impl AsRef<Path>,
     configure_opts: impl Iterator<Item = &'a str>,
 ) -> Result<(), Error> {
     use make::Command;
@@ -201,7 +246,7 @@ fn build<'a>(
     let current_dir = src_dir.as_ref();
 
     make::Configure {
-        prefix: dist_dir.as_ref(),
+        prefix: dst_dir.as_ref(),
         opts: configure_opts.collect(),
     }
     .run(current_dir)?;
