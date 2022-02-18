@@ -12,16 +12,9 @@ use thiserror::Error;
 pub struct ListRemote {
     version: Option<Version>,
     #[clap(
-        short,
-        long,
-        conflicts_with = "version",
-        help = "List all old versions"
-    )]
-    all: bool,
-    #[clap(
         long = "latest-patch",
         visible_alias = "lp",
-        help = "List latest patch release (avairable only if patch number is NOt specified)"
+        help = "List latest patch release (avairable only if patch number is NOT specified)"
     )]
     only_latest_patch: bool,
 }
@@ -48,17 +41,13 @@ impl Command for ListRemote {
                 vec![*version]
             }
             None => {
-                if self.all {
-                    vec![
-                        Version::from_major(3),
-                        Version::from_major(4),
-                        Version::from_major(5),
-                        Version::from_major(7),
-                        Version::from_major(8),
-                    ]
-                } else {
-                    vec![Version::from_major(7), Version::from_major(8)]
-                }
+                vec![
+                    Version::from_major(3),
+                    Version::from_major(4),
+                    Version::from_major(5),
+                    Version::from_major(7),
+                    Version::from_major(8),
+                ]
             }
         };
 
@@ -117,7 +106,6 @@ mod tests {
         let config = Config::default().with_base_dir(base_dir);
         let cmd = ListRemote {
             version: None,
-            all: true,
             only_latest_patch: false,
         };
         assert!(cmd.run(&config).is_ok());
@@ -128,7 +116,6 @@ mod tests {
         let config = Config::default().with_base_dir(base_dir);
         let cmd = ListRemote {
             version: Some("7.2".parse().unwrap()),
-            all: false,
             only_latest_patch: false,
         };
         assert!(cmd.run(&config).is_ok());
