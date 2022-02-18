@@ -34,8 +34,10 @@ impl Command for ListLocal {
             println!("{}", local_version.to_string_by(installed, used))
         }
 
-        for (alias, linked_version) in version::alias::read_aliases_dir(config).sorted() {
-            println!("{}@ -> {}", alias.decorized(), linked_version.decorized())
+        if self.version.is_none() {
+            for (alias, linked_version) in version::alias::read_aliases_dir(config).sorted() {
+                println!("{}@ -> {}", alias.decorized(), linked_version.decorized())
+            }
         }
         Ok(())
     }
