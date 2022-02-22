@@ -2,31 +2,58 @@
 
 :zap: PHP version manager written in rust
 
-## :sparkles: Features
+## Features
 
 - No requirements for system PHP installation
 - Cross-platform support (macOS, Linux)
-- Automatically version switching with `.php-version`
+- Automatically version switching via `.php-version`
 
-## :wrench: Installation
+## Installation
 
-### shell setup
+### Requirements
 
-#### Bash or Zsh
+- OS: Unix-like (Linux, macOS, BSD)
+- shell: bash, zsh
+- `curl`/`ps` instalation
+
+### Manually
+
+#### using a release binary
+
+1. Download the [latest release binary](https://github.com/masan4444/phpup/releases) for your system
+2. Make it available globally on `PATH` environment variable
+
+#### using cargo
+
+```
+cargo install phpup
+```
+
+### Shell setup
 
 Add the following to your `.bashrc` or `.zshrc`
 
 ```bash
-eval "$(phpup init)"
+eval "$(phpup init --auto --recursive)"
 ```
 
-## :hammer: Usage
+- To automatically run `phpup use` when a directory contains a `.php-version` file, add the `--auto`(long: `--auto-switch`) option.
+- To search recursively for a `.php-version` file in a parent directory when running `phpup use` automatically, add the `--recursive`(long: `--recursive-version-file`) option.
+- For more options, run `phpup init --help`.
 
-## :pencil2: Contribution
+## Usage
+
+```
+phpup help
+```
+
+## Contribution
+
+PRs Welcome :tada:
 
 - [TODO.md](TODO.md)
 
-## :paperclip: Inspired
+## Inspired
 
 - [Schniz/fnm](https://github.com/Schniz/fnm)
 - [TaKO8Ki/frum](https://github.com/TaKO8Ki/frum)
