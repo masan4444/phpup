@@ -1,0 +1,166 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create artifacts directory
+        run: mkdir artifacts
+
+      - name: Get the release version from the tag
+        if: env.RELEASE_VERSION == ''
+        run: |
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "version is: ${{ env.RELEASE_VERSION }}"
+
+      - name: Create GitHub release
+        id: release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.RELEASE_VERSION }}
+          release_name: ${{ env.RELEASE_VERSION }}
+          draft: true
+
+      - name: Save release upload URL to artifact
+        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+
+      - name: Save version number to artifact
+        run: echo "${{ env.RELEASE_VERSION }}" > artifacts/release-version
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+
+  # cargo_publish:
+  #   name: Cargo Publish
+  #   needs: create_release
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Cargo login
+  #       run: cargo login ${CRATES_IO_TOKEN}
+  #       env:
+  #         CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+  #     - run: cargo publish
+
+  build_release:
+    name: Build Release
+    needs: create_release
+    runs-on: ${{ matrix.os }}
+    env:
+      CARGO: cargo
+      RUSTFLAGS: -C strip=symbols
+      TARGET_FLAGS: --target ${{ matrix.target }}
+      TARGET_DIR: ./target/${{ matrix.target }}
+      RUST_BACKTRACE: 1
+    strategy:
+      matrix:
+        build: [linux, linux-armv7, linux-aarch64, macos]
+        include:
+          - build: linux
+            os: ubuntu-18.04
+            rust: stable
+            target: x86_64-unknown-linux-musl
+            strip: strip
+          - build: linux-armv7
+            os: ubuntu-18.04
+            rust: stable
+            target: armv7-unknown-linux-gnueabihf
+            strip: arm-linux-gnueabihf-strip
+          - build: linux-aarch64
+            os: ubuntu-18.04
+            rust: stable
+            target: aarch64-unknown-linux-musl
+            strip: aarch64-linux-musl-strip
+          - build: macos
+            os: macOS-latest
+            rust: stable
+            target: x86_64-apple-darwin
+            strip: strip
+          # - build: macos-aarch64
+          #   os: macOS-latest
+          #   rust: stable
+          #   target: aarch64-apple-darwin
+            # strip: strip
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Install packages (Ubuntu)
+        if: matrix.os == 'ubuntu-18.04'
+        run: sudo apt install libssl-dev zlib1g-dev
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          profile: minimal
+          override: true
+          target: ${{ matrix.target }}
+
+      - name: Use Cross
+        if: matrix.build == 'linux-armv7' || matrix.build == 'linux-aarch64'
+        run: |
+          cargo install cross
+          echo "CARGO=cross" >> $GITHUB_ENV
+
+      - name: Get release download URL
+        uses: actions/download-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Set release upload URL and release version
+        shell: bash
+        run: |
+          release_upload_url="$(cat artifacts/release-upload-url)"
+          echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
+          echo "release upload url: $RELEASE_UPLOAD_URL"
+          release_version="$(cat artifacts/release-version)"
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
+          echo "release version: $RELEASE_VERSION"
+
+      - name: Build release binary
+        run: RUSTFLAGS="${{ env.RUSTFLAGS }}" ${{ env.CARGO }} build ${{ env.TARGET_FLAGS }} --verbose --release
+
+      - name: Strip release binary (arm)
+        if: matrix.build == 'linux-armv7' || matrix.build == 'linux-aarch64'
+        run: |
+          docker run --rm -v \
+            "$PWD/target:/target:Z" \
+            rustembedded/cross:${{ matrix.target }} \
+            ${{ matrix.strip }} \
+            /target/${{ matrix.target }}/release/phpup
+
+      - name: Build archive
+        shell: bash
+        run: |
+          staging="phpup-${{ env.RELEASE_VERSION }}-${{ matrix.build }}"
+          mkdir "$staging"
+          cp {README.md,LICENSE} "$staging/"
+          cp "target/${{ matrix.target }}/release/phpup" "$staging/"
+          zip -r "$staging.zip" "$staging"
+          echo "ASSET=$staging.zip" >> $GITHUB_ENV
+
+      - name: Upload release archive
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
+          asset_path: ${{ env.ASSET }}
+          asset_name: ${{ env.ASSET }}
+          asset_content_type: application/octet-stream
