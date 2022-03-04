@@ -1,4 +1,4 @@
-# PHP-UP - Fast and Simple PHP version manager
+# PHP-UP - Cross-Platform PHP version manager
 
 :zap: PHP version manager written in rust
 
@@ -9,16 +9,16 @@
 ## Features
 
 - No requirements for system PHP installation
-- Cross-platform support (macOS, Linux)
+- Cross-platform support (Linux, macOS, Windows[WIP])
 - Automatically version switching via `.php-version`
 
 ## Installation
 
 ### Requirements
 
-- OS: Unix-like (Linux, macOS, BSD)
-- shell: bash, zsh
-- `curl`/`ps` instalation
+- OS: Linux, macOS, Windows[WIP]
+- shell: bash, zsh, fish[WIP], powershell[WIP]
+- `curl`/`ps` installation
 
 ### Manually
 
@@ -41,8 +41,8 @@ Add the following to your `.bashrc` or `.zshrc`
 eval "$(phpup init --auto --recursive)"
 ```
 
-- To automatically run `phpup use` when a directory contains a `.php-version` file, add the `--auto`(long: `--auto-switch`) option.
-- To search recursively for a `.php-version` file in a parent directory when running `phpup use` automatically, add the `--recursive`(long: `--recursive-version-file`) option.
+- To automatically run `phpup use` when a directory contains a `.php-version` file, add the `--auto` (long: `--auto-switch`) option.
+- To search recursively for a `.php-version` file in a parent directory when running `phpup use` automatically, add the `--recursive` (long: `--recursive-version-file`) option.
 - For more options, run `phpup init --help`.
 
 ## Usage
