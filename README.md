@@ -2,6 +2,10 @@
 
 :zap: PHP version manager written in rust
 
+<div align="center">
+  <img src="./docs/phpup.gif" alt="Blazing fast!">
+</div>
+
 ## Features
 
 - No requirements for system PHP installation
