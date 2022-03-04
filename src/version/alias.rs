@@ -78,8 +78,7 @@ pub fn read_aliases_dir(config: &Config) -> impl Iterator<Item = (Alias, Local)>
     std::fs::read_dir(&aliases_dir)
         .unwrap()
         .flatten()
-        .map(|entry| read_alias(entry.path()))
-        .flatten()
+        .flat_map(|entry| read_alias(entry.path()))
 }
 
 impl Ord for Alias {
