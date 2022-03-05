@@ -156,19 +156,17 @@ setup_shell() {
     echo '  # PHP-UP'
     echo '  export PATH='"$INSTALL_DIR/bin"':$PATH'
     echo '  eval "$(phpup init --auto --recursive)"'
-    echo '  # for zsh completions'
-    echo '  fpath=(/home/masan4444/.phpup/completions/zsh $fpath)'
-    echo '  autoload -Uz _phpup'
-    echo '  compinit'
+    echo '  fpath=('$INSTALL_DIR/completions/zsh' $fpath)'
+    echo '  # To use completion, run `compinit` after adding $fpath'
+    echo '  # compinit'
 
     echo '' >>$CONF_FILE
     echo '# PHP-UP' >>$CONF_FILE
     echo 'export PATH='$INSTALL_DIR/bin':$PATH' >>$CONF_FILE
     echo 'eval "$(phpup init --auto --recursive)"' >>$CONF_FILE
-    echo '# for zsh completions' >>$CONF_FILE
-    echo 'fpath=(/home/masan4444/.phpup/completions/zsh $fpath)' >>$CONF_FILE
-    echo 'autoload -Uz _phpup' >>$CONF_FILE
-    echo 'compinit' >>$CONF_FILE
+    echo 'fpath=('$INSTALL_DIR/completions/zsh' $fpath)' >>$CONF_FILE
+    echo '# To use completion, run `compinit` after adding $fpath' >>$CONF_FILE
+    echo '# compinit' >>$CONF_FILE
 
   # elif [ "$CURRENT_SHELL" = "fish" ]; then
   #   CONF_FILE=$HOME/.config/fish/conf.d/phpup.fish
