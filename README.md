@@ -12,6 +12,25 @@
 - Cross-platform support (Linux, macOS, Windows[WIP])
 - Automatically version switching via `.php-version`
 
+## Quick Start (Linux, macOS)
+
+```sh
+curl https://raw.githubusercontent.com/masan4444/phpup/master/.ci/install.sh | bash
+```
+
+#### Upgrade
+
+To prevent duplication in your shell config file, add `--skip-shell` option to install command.
+
+```sh
+curl https://raw.githubusercontent.com/masan4444/phpup/master/.ci/install.sh  | bash -s -- --skip-shell
+```
+
+#### Uninstall
+
+To remove PHP-UP, just delete the `.phpup` folder in your home directory.
+You should also edit your shell configuration to remove any references to phpup.
+
 ## Installation
 
 ### Requirements
@@ -20,7 +39,7 @@
 - shell: bash, zsh, fish[WIP], powershell[WIP]
 - `curl`/`ps` installation
 
-### Manually
+### Installation
 
 #### using a release binary
 
