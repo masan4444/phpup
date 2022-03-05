@@ -139,11 +139,9 @@ jobs:
       - name: Strip release binary (arm)
         if: matrix.build == 'linux-armv7' || matrix.build == 'linux-aarch64'
         run: |
-          docker run --rm -v \
-            "$PWD/target:/target:Z" \
+          docker run --rm -v $PWD/target:/target:Z \
             rustembedded/cross:${{ matrix.target }} \
-            ${{ matrix.strip }} \
-            /target/${{ matrix.target }}/release/phpup
+            ${{ matrix.strip }} /target/${{ matrix.target }}/release/phpup
 
       - name: Generate completion files
         if: matrix.build == 'linux' || matrix.build == 'macos'
@@ -156,7 +154,7 @@ jobs:
         if: matrix.build == 'linux-armv7' || matrix.build == 'linux-aarch64'
         run: |
           mkdir -p completions/{bash,zsh}
-          docker run --rm
+          docker run --rm \
             -v $PWD/target:/target:Z \
             -v $PWD/completions:/completions:Z \
             rustembedded/cross:${{ matrix.target }} \
