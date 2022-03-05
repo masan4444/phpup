@@ -7,6 +7,7 @@ set -e
 INSTALL_DIR="$HOME/.phpup"
 RELEASE="latest"
 OS="$(uname -s)"
+REPOSITORY="https://github.com/masan4444/phpup"
 
 # Parse Flags
 parse_args() {
@@ -66,7 +67,7 @@ set_filename() {
   #   echo "Downloading phpup using Homebrew..."
   else
     echo "OS $OS is not supported."
-    echo "If you think that's a bug - please file an issue to https://github.com/masan4444/phpup/issues"
+    echo "If you think that's a bug - please file an issue to $REPOSITORY/issues"
     exit 1
   fi
 }
@@ -76,9 +77,9 @@ download_phpup() {
     brew install phpup
   else
     if [ "$RELEASE" = "latest" ]; then
-      URL="https://github.com/masan4444/phpup/releases/latest/download/$FILENAME.zip"
+      URL="$REPOSITORY/releases/latest/download/$FILENAME.zip"
     else
-      URL="https://github.com/masan4444/phpup/releases/download/$RELEASE/$FILENAME.zip"
+      URL="$REPOSITORY/releases/download/$RELEASE/$FILENAME.zip"
     fi
 
     DOWNLOAD_DIR=$(mktemp -d)
