@@ -148,11 +148,13 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          staging="phpup-${{ env.RELEASE_VERSION }}-${{ matrix.build }}"
-          mkdir "$staging"
-          cp {README.md,LICENSE} "$staging/"
-          cp "target/${{ matrix.target }}/release/phpup" "$staging/"
-          zip -r "$staging.zip" "$staging"
+          staging=phpup-${{ matrix.build }}
+          mkdir $staging/completions/{bash,zsh}
+          cp {README.md,LICENSE} $staging/
+          cp target/${{ matrix.target }}/release/phpup $staging/
+          $staging/phpup completions --shell bash > $staging/completions/bash/_phpup
+          $staging/phpup completions --shell zsh > $staging/completions/zsh/_phpup
+          zip -r $staging.zip $staging
           echo "ASSET=$staging.zip" >> $GITHUB_ENV
 
       - name: Upload release archive
