@@ -35,3 +35,6 @@ indoc = "1.0.3"
 indicatif = "0.16.2"
 md5 = "0.7.0"
 sha2 = "0.10.2"
+
+[profile.release]
+strip = "symbols"
