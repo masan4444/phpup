@@ -145,15 +145,31 @@ jobs:
             ${{ matrix.strip }} \
             /target/${{ matrix.target }}/release/phpup
 
+      - name: Generate completion files
+        if: matrix.build == 'linux' || matrix.build == 'macos'
+        run: |
+          mkdir -p completions/{bash,zsh}
+          ./target/${{ matrix.target }}/release/phpup --shell bash > completions/bash/_phpup
+          ./target/${{ matrix.target }}/release/phpup --shell zsh > completions/zsh/_phpup
+
+      - name: Generate completion files (arm)
+        if: matrix.build == 'linux-armv7' || matrix.build == 'linux-aarch64'
+        run: |
+          mkdir -p completions/{bash,zsh}
+          docker run --rm -v \
+            "$PWD/target:/target:Z" \
+            rustembedded/cross:${{ matrix.target }} \
+            ./target/${{ matrix.target }}/release/phpup --shell bash > completions/bash/_phpup & \
+            ./target/${{ matrix.target }}/release/phpup --shell zsh > completions/zsh/_phpup
+
       - name: Build archive
         shell: bash
         run: |
           staging=phpup-${{ matrix.build }}
-          mkdir -p $staging/completions/{bash,zsh}
+          mkdir $staging
           cp {README.md,LICENSE} $staging/
           cp target/${{ matrix.target }}/release/phpup $staging/
-          $staging/phpup completions --shell bash > $staging/completions/bash/_phpup
-          $staging/phpup completions --shell zsh > $staging/completions/zsh/_phpup
+          cp -r completions $staging/
           zip -r $staging.zip $staging
           echo "ASSET=$staging.zip" >> $GITHUB_ENV
 
