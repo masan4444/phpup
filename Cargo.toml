@@ -1,6 +1,6 @@
 [package]
 name = "phpup"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Masanori Ueno <masanori0213@gmail.com>"]
 license = "GPL-3.0"
 edition = "2021"
