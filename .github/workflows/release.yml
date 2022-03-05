@@ -143,7 +143,7 @@ jobs:
           ./target/${{ matrix.target }}/release/phpup completions --shell zsh > completions/zsh/_phpup
 
       - name: Generate completion files (arm)
-        if: matrix.arch == 'armv7' || matrix.build == 'aarch64'
+        if: matrix.arch == 'armv7' || matrix.arch == 'aarch64'
         uses: uraimo/run-on-arch-action@v2.1.1
         with:
           arch: ${{ matrix.arch }}
