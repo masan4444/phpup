@@ -149,7 +149,7 @@ jobs:
         shell: bash
         run: |
           staging=phpup-${{ matrix.build }}
-          mkdir $staging/completions/{bash,zsh}
+          mkdir -p $staging/completions/{bash,zsh}
           cp {README.md,LICENSE} $staging/
           cp target/${{ matrix.target }}/release/phpup $staging/
           $staging/phpup completions --shell bash > $staging/completions/bash/_phpup
