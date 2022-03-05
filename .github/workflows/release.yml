@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - "v*"
 
 jobs:
   create_release:
@@ -71,27 +71,31 @@ jobs:
             os: ubuntu-18.04
             rust: stable
             target: x86_64-unknown-linux-musl
+            arch: x86_64
             strip: strip
           - build: linux-armv7
             os: ubuntu-18.04
             rust: stable
             target: armv7-unknown-linux-gnueabihf
+            arch: armv7
             strip: arm-linux-gnueabihf-strip
           - build: linux-aarch64
             os: ubuntu-18.04
             rust: stable
             target: aarch64-unknown-linux-musl
+            arch: aarch64
             strip: aarch64-linux-musl-strip
           - build: macos
             os: macOS-latest
             rust: stable
             target: x86_64-apple-darwin
+            arch: x86_64
             strip: strip
           # - build: macos-aarch64
           #   os: macOS-latest
           #   rust: stable
           #   target: aarch64-apple-darwin
-            # strip: strip
+          #   strip: strip
 
     steps:
       - name: Checkout repository
@@ -139,21 +143,40 @@ jobs:
       - name: Strip release binary (arm)
         if: matrix.build == 'linux-armv7' || matrix.build == 'linux-aarch64'
         run: |
-          docker run --rm -v \
-            "$PWD/target:/target:Z" \
+          docker run --rm -v $PWD/target:/target:Z \
             rustembedded/cross:${{ matrix.target }} \
-            ${{ matrix.strip }} \
-            /target/${{ matrix.target }}/release/phpup
+            ${{ matrix.strip }} /target/${{ matrix.target }}/release/phpup
+
+      - name: Generate completion files
+        if: matrix.build == 'linux' || matrix.build == 'macos'
+        run: |
+          mkdir -p completions/{bash,zsh}
+          ./target/${{ matrix.target }}/release/phpup completions --shell bash > completions/bash/_phpup
+          ./target/${{ matrix.target }}/release/phpup completions --shell zsh > completions/zsh/_phpup
+
+      - name: Generate completion files (arm)
+        if: matrix.build == 'linux-armv7' || matrix.build == 'linux-aarch64'
+        uses: uraimo/run-on-arch-action@v2.1.1
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ubuntu20.04
+          githubToken: ${{ github.token }}
+          dockerRunArgs: |
+            -v $PWD/target:/target:Z \
+            -v $PWD/completions:/completions:Z
+          run: |
+            mkdir -p completions/{bash,zsh}
+            ./target/${{ matrix.target }}/release/phpup completions --shell bash > completions/bash/_phpup
+            ./target/${{ matrix.target }}/release/phpup completions --shell zsh > completions/zsh/_phpup
 
       - name: Build archive
         shell: bash
         run: |
           staging=phpup-${{ matrix.build }}
-          mkdir -p $staging/completions/{bash,zsh}
+          mkdir $staging
           cp {README.md,LICENSE} $staging/
           cp target/${{ matrix.target }}/release/phpup $staging/
-          $staging/phpup completions --shell bash > $staging/completions/bash/_phpup
-          $staging/phpup completions --shell zsh > $staging/completions/zsh/_phpup
+          cp -r completions $staging/
           zip -r $staging.zip $staging
           echo "ASSET=$staging.zip" >> $GITHUB_ENV
 
