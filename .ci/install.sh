@@ -47,10 +47,10 @@ set_filename() {
     # Based on https://stackoverflow.com/a/45125525
     case "$(uname -m)" in
       arm | armv7*)
-        FILENAME="phpup-armv7"
+        FILENAME="phpup-linux-armv7"
         ;;
       aarch* | armv8*)
-        FILENAME="phpup-aarch64"
+        FILENAME="phpup-linux-aarch64"
         ;;
       *)
         FILENAME="phpup-linux"
