@@ -157,7 +157,7 @@ setup_shell() {
     echo '  export PATH='"$INSTALL_DIR/bin"':$PATH'
     echo '  eval "$(phpup init --auto --recursive)"'
     echo '  # for zsh completions'
-    echo '  fpath=(/home/masan4444/.phpup/completions/zsh '$fpath')'
+    echo '  fpath=(/home/masan4444/.phpup/completions/zsh $fpath)'
     echo '  autoload -Uz _phpup'
     echo '  compinit'
 
@@ -166,7 +166,7 @@ setup_shell() {
     echo 'export PATH='$INSTALL_DIR/bin':$PATH' >>$CONF_FILE
     echo 'eval "$(phpup init --auto --recursive)"' >>$CONF_FILE
     echo '# for zsh completions' >>$CONF_FILE
-    echo 'fpath=(/home/masan4444/.phpup/completions/zsh '$fpath')' >>$CONF_FILE
+    echo 'fpath=(/home/masan4444/.phpup/completions/zsh $fpath)' >>$CONF_FILE
     echo 'autoload -Uz _phpup' >>$CONF_FILE
     echo 'compinit' >>$CONF_FILE
 
