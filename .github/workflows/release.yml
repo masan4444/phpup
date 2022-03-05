@@ -149,8 +149,8 @@ jobs:
         if: matrix.build == 'linux' || matrix.build == 'macos'
         run: |
           mkdir -p completions/{bash,zsh}
-          ./target/${{ matrix.target }}/release/phpup --shell bash > completions/bash/_phpup
-          ./target/${{ matrix.target }}/release/phpup --shell zsh > completions/zsh/_phpup
+          ./target/${{ matrix.target }}/release/phpup completions --shell bash > completions/bash/_phpup
+          ./target/${{ matrix.target }}/release/phpup completions --shell zsh > completions/zsh/_phpup
 
       - name: Generate completion files (arm)
         if: matrix.build == 'linux-armv7' || matrix.build == 'linux-aarch64'
@@ -159,8 +159,9 @@ jobs:
           docker run --rm -v \
             "$PWD/target:/target:Z" \
             rustembedded/cross:${{ matrix.target }} \
-            ./target/${{ matrix.target }}/release/phpup --shell bash > completions/bash/_phpup & \
-            ./target/${{ matrix.target }}/release/phpup --shell zsh > completions/zsh/_phpup
+            /bin/sh -c \
+            "./target/${{ matrix.target }}/release/phpup completions --shell bash > completions/bash/_phpup & \
+            ./target/${{ matrix.target }}/release/phpup completions --shell zsh > completions/zsh/_phpup"
 
       - name: Build archive
         shell: bash
