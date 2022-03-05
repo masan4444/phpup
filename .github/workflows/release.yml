@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   create_release:
@@ -91,7 +91,7 @@ jobs:
           #   os: macOS-latest
           #   rust: stable
           #   target: aarch64-apple-darwin
-            # strip: strip
+          #   strip: strip
 
     steps:
       - name: Checkout repository
@@ -156,12 +156,13 @@ jobs:
         if: matrix.build == 'linux-armv7' || matrix.build == 'linux-aarch64'
         run: |
           mkdir -p completions/{bash,zsh}
-          docker run --rm -v \
-            "$PWD/target:/target:Z" \
+          docker run --rm
+            -v $PWD/target:/target:Z \
+            -v $PWD/completions:/completions:Z \
             rustembedded/cross:${{ matrix.target }} \
             /bin/sh -c \
-            "./target/${{ matrix.target }}/release/phpup completions --shell bash > completions/bash/_phpup & \
-            ./target/${{ matrix.target }}/release/phpup completions --shell zsh > completions/zsh/_phpup"
+              "./target/${{ matrix.target }}/release/phpup completions --shell bash > completions/bash/_phpup & \
+               ./target/${{ matrix.target }}/release/phpup completions --shell zsh > completions/zsh/_phpup"
 
       - name: Build archive
         shell: bash
