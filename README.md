@@ -23,7 +23,7 @@ curl https://raw.githubusercontent.com/masan4444/phpup/master/.ci/install.sh | b
 To prevent duplication in your shell config file, add `--skip-shell` option to install command.
 
 ```sh
-curl https://raw.githubusercontent.com/masan4444/phpup/master/.ci/install.sh --skip-shell | bash
+curl https://raw.githubusercontent.com/masan4444/phpup/master/.ci/install.sh  | bash -s -- --skip-shell
 ```
 
 #### Uninstall
