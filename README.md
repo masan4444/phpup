@@ -66,6 +66,38 @@ eval "$(phpup init --auto --recursive)"
 
 ## Usage
 
+### PHP Installation
+
+#### How to specify configure options
+
+##### using the command option: `--configure-opts`
+
+```sh
+PKG_CONFIG_PATH="$(brew --prefix libxml2)/lib/pkgconfig" \
+phpup install 8.1 \
+  --configure-opts="--with-iconv=$(brew --prefix libiconv)"
+```
+
+##### using the shell variable: `PHPUP_CONFIGURE_OPTS`
+
+```sh
+PKG_CONFIG_PATH="$(brew --prefix libxml2)/lib/pkgconfig" \
+PHPUP_CONFIGURE_OPTS="--with-iconv=$(brew --prefix libiconv)" \
+phpup install 8.1
+```
+
+##### using the env variable: `PHPUP_CONFIGURE_OPTS`
+
+```sh
+export PKG_CONFIG_PATH="$(brew --prefix libxml2)/lib/pkgconfig"
+export PHPUP_CONFIGURE_OPTS="--with-iconv=$(brew --prefix libiconv)"
+phpup install 8.1
+```
+
+See [List of core configure options](https://www.php.net/manual/en/configure.about.php) for more configre options.
+
+### For more details
+
 ```
 phpup help
 ```
