@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "github": {
+    "silent": true
+  },
+  "redirects": [
+    { "source": "/", "destination": "https://github.com/masan4444/phpup" },
+    { "source": "/install", "destination": "https://raw.githubusercontent.com/masan4444/phpup/master/.ci/install.sh" }
+  ]
+}

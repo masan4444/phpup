@@ -14,8 +14,10 @@
 
 ## Quick Start (Linux, macOS)
 
+For bash, zsh, there's a [installation script](./.ci/install.sh)
+
 ```sh
-curl https://raw.githubusercontent.com/masan4444/phpup/master/.ci/install.sh | bash
+curl https://phpup.vercel.app/install | bash
 ```
 
 #### Upgrade
@@ -23,7 +25,7 @@ curl https://raw.githubusercontent.com/masan4444/phpup/master/.ci/install.sh | b
 To prevent duplication in your shell config file, add `--skip-shell` option to install command.
 
 ```sh
-curl https://raw.githubusercontent.com/masan4444/phpup/master/.ci/install.sh  | bash -s -- --skip-shell
+curl https://phpup.vercel.app/install  | bash -s -- --skip-shell
 ```
 
 #### Uninstall
