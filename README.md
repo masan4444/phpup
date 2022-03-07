@@ -17,7 +17,7 @@
 For bash, zsh, there's a [installation script](./.ci/install.sh)
 
 ```sh
-curl https://phpup.vercel.app/install | bash
+curl -fsSL https://phpup.vercel.app/install | bash
 ```
 
 #### Upgrade
@@ -25,7 +25,7 @@ curl https://phpup.vercel.app/install | bash
 To prevent duplication in your shell config file, add `--skip-shell` option to install command.
 
 ```sh
-curl https://phpup.vercel.app/install  | bash -s -- --skip-shell
+curl -fsSL https://phpup.vercel.app/install  | bash -s -- --skip-shell
 ```
 
 #### Uninstall
