@@ -2,7 +2,12 @@ use crate::commands::{self, Command};
 use crate::config::Config;
 
 #[derive(clap::Parser, Debug)]
-#[clap(name = "PHP-UP", bin_name = "phpup")]
+#[clap(
+    name = env!("CARGO_PKG_NAME"),
+    version = env!("CARGO_PKG_VERSION"),
+    bin_name = "phpup",
+    about = env!("CARGO_PKG_DESCRIPTION")
+)]
 pub struct Cli {
     #[clap(flatten)]
     pub config: Config,

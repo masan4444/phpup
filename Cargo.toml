@@ -5,7 +5,7 @@ authors = ["Masanori Ueno <masanori0213@gmail.com>"]
 license = "GPL-3.0"
 edition = "2021"
 repository = "https://github.com/masan4444/phpup"
-description = "Fast and Simple PHP version manager"
+description = "Cross-Platform PHP version manager"
 keywords = ["php", "version", "manager"]
 categories = ["command-line-utilities", "development-tools"]
 
