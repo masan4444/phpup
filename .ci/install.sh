@@ -169,18 +169,20 @@ setup_shell() {
     echo '# To use completion, run `compinit` after adding $fpath' >>$CONF_FILE
     echo '# compinit' >>$CONF_FILE
 
-  # elif [ "$CURRENT_SHELL" = "fish" ]; then
-  #   CONF_FILE=$HOME/.config/fish/conf.d/phpup.fish
-  #   ensure_containing_dir_exists "$CONF_FILE"
-  #   echo "Installing for Fish. Appending the following to $CONF_FILE:"
-  #   echo ""
-  #   echo '  # PHP-UP'
-  #   echo '  set PATH '"$INSTALL_DIR"' $PATH'
-  #   echo '  phpup init --auto --recursive | source'
+  elif [ "$CURRENT_SHELL" = "fish" ]; then
+    CONF_FILE=$HOME/.config/fish/conf.d/phpup.fish
+    ensure_containing_dir_exists "$CONF_FILE"
+    echo "Installing for Fish. Appending the following to $CONF_FILE:"
+    echo ""
+    echo '  # PHP-UP'
+    echo '  set PATH '$INSTALL_DIR/bin' $PATH'
+    echo '  phpup init --auto --recursive | source'
+    echo '  set -gx fish_complete_path '$INSTALL_DIR/completions/fish' $fish_complete_path'
 
-  #   echo '# PHP-UP' >>$CONF_FILE
-  #   echo 'set PATH '"$INSTALL_DIR"' $PATH' >>$CONF_FILE
-  #   echo 'phpup init --auto --recursive | source' >>$CONF_FILE
+    echo '# PHP-UP' >>$CONF_FILE
+    echo 'set PATH '$INSTALL_DIR/bin' $PATH' >>$CONF_FILE
+    echo 'phpup init --auto --recursive | source' >>$CONF_FILE
+    echo 'set -gx fish_complete_path '$INSTALL_DIR/completions/fish' $fish_complete_path' >>$CONF_FILE
 
   elif [ "$CURRENT_SHELL" = "bash" ]; then
     if [ "$OS" = "Darwin" ]; then
