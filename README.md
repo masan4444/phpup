@@ -14,7 +14,7 @@
 
 ## Quick Start (Linux, macOS)
 
-For bash, zsh, there's a [installation script](./.ci/install.sh)
+For `bash`, `zsh` and `fish` there's a [installation script](./.ci/install.sh)
 
 ```sh
 curl -fsSL https://phpup.vercel.app/install | bash
@@ -25,7 +25,7 @@ curl -fsSL https://phpup.vercel.app/install | bash
 To prevent duplication in your shell config file, add `--skip-shell` option to install command.
 
 ```sh
-curl -fsSL https://phpup.vercel.app/install  | bash -s -- --skip-shell
+curl -fsSL https://phpup.vercel.app/install | bash -s -- --skip-shell
 ```
 
 #### Uninstall
@@ -38,8 +38,8 @@ You should also edit your shell configuration to remove any references to phpup.
 ### Requirements
 
 - OS: Linux, macOS, Windows[WIP]
-- shell: bash, zsh, fish[WIP], powershell[WIP]
-- `curl`/`ps` installation
+- shell: `bash`, `zsh`, `fish` or `powershell`[WIP]
+- `curl`, `ps` and `make` installation
 
 ### Installation
 
@@ -56,10 +56,19 @@ cargo install phpup
 
 ### Shell setup
 
+#### Bash, Zsh
+
 Add the following to your `.bashrc` or `.zshrc`
 
-```bash
+```sh
 eval "$(phpup init --auto --recursive)"
+```
+#### Fish
+
+Create `~/.config/fish/conf.d/phpup.fish` and add the following to it
+
+```fish
+phpup init --auto --recursive | source
 ```
 
 - To automatically run `phpup use` when a directory contains a `.php-version` file, add the `--auto` (long: `--auto-switch`) option.
