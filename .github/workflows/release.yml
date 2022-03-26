@@ -138,7 +138,7 @@ jobs:
       - name: Generate completion files (x86_64)
         if: matrix.arch == 'x86_64'
         run: |
-          mkdir -p completions/{bash,zsh}
+          mkdir -p completions/{bash,zsh,fish}
           ./target/${{ matrix.target }}/release/phpup completions --shell bash > completions/bash/_phpup
           ./target/${{ matrix.target }}/release/phpup completions --shell zsh > completions/zsh/_phpup
           ./target/${{ matrix.target }}/release/phpup completions --shell fish > completions/fish/phpup.fish
@@ -154,7 +154,7 @@ jobs:
             -v $PWD/target:/target:Z \
             -v $PWD/completions:/completions:Z
           run: |
-            mkdir -p completions/{bash,zsh}
+            mkdir -p completions/{bash,zsh,fish}
             ./target/${{ matrix.target }}/release/phpup completions --shell bash > completions/bash/_phpup
             ./target/${{ matrix.target }}/release/phpup completions --shell zsh > completions/zsh/_phpup
             ./target/${{ matrix.target }}/release/phpup completions --shell fish > completions/fish/phpup.fish
