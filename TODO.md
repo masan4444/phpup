@@ -34,7 +34,7 @@
 ## Cross-platform support
 
 - [x] bash
-- [ ] fish
+- [x] fish
 - [ ] windows
 
 ## Test
