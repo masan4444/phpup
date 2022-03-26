@@ -9,18 +9,21 @@ use thiserror::Error;
 pub enum Shell {
     Bash,
     Zsh,
+    Fish,
 }
 
 pub const fn available_shells() -> &'static [&'static str] {
-    &["bash", "zsh"]
+    &["bash", "zsh", "fish"]
 }
 
 #[derive(Debug, Error)]
 pub enum ShellDetectError {
     #[error("parent process tracing count reached the limit: {MAX_SEARCH_ITERATIONS}")]
     TooManyTracing,
+
     #[error("reached first process PID=0 when tracing processes")]
     ReachedFirstProcess,
+
     #[error(transparent)]
     FailedGetProcessInfo(#[from] ProcessInfoError),
 }
@@ -60,6 +63,7 @@ impl Shell {
             Bash | Zsh => {
                 format!("export PATH={}:$PATH", path.as_ref().display())
             }
+            Fish => format!("set -gx PATH {} $PATH;", path.as_ref().display()),
         }
     }
     pub fn set_env(&self, name: impl Display, value: impl Display) -> String {
@@ -67,6 +71,7 @@ impl Shell {
             Bash | Zsh => {
                 format!("export {}={}", name, value)
             }
+            Fish => format!("set -gx {} {};", name, value),
         }
     }
     pub fn auto_switch_hook(&self, version_file: &version::File) -> String {
@@ -83,7 +88,8 @@ impl Shell {
 
         match &self {
             Bash => {
-                formatdoc! {r#"
+                formatdoc! {
+                    r#"
                     __phpup_use() {{
                         {phpup_use}
                     }}
@@ -97,7 +103,8 @@ impl Shell {
                 }
             }
             Zsh => {
-                formatdoc! {r#"
+                formatdoc! {
+                    r#"
                     autoload -U add-zsh-hook
                     _phpup_autoload_hook () {{
                         {phpup_use}
@@ -107,11 +114,22 @@ impl Shell {
                     phpup_use = phpup_use
                 }
             }
+            Fish => {
+                formatdoc!(
+                    r#"
+                    function _phpup_autoload_hook --on-variable PWD --description 'Change PHP version on directory change'
+                        status --is-command-substitution; and return
+                        {phpup_use}
+                    end
+                    _phpup_autoload_hook"#,
+                    phpup_use = phpup_use
+                )
+            }
         }
     }
     pub fn rehash(&self) -> Option<String> {
         match &self {
-            Bash => None,
+            Bash | Fish => None,
             Zsh => Some("rehash".to_string()),
         }
     }
@@ -119,6 +137,7 @@ impl Shell {
         match &self {
             Bash => clap_complete::Shell::Bash,
             Zsh => clap_complete::Shell::Zsh,
+            Fish => clap_complete::Shell::Fish,
         }
     }
 }
@@ -135,6 +154,7 @@ impl FromStr for Shell {
         match s {
             "bash" | "dash" => Ok(Bash),
             "zsh" => Ok(Zsh),
+            "fish" => Ok(Fish),
             _ => Err(ParseShellError::UnknownShell(s.to_owned())),
         }
     }
