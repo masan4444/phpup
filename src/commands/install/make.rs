@@ -15,8 +15,12 @@ static PROGRESS_STYLE: Lazy<ProgressStyle> = Lazy::new(|| {
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("Can't execute the command because {0}")]
-    FailedExecute(#[from] std::io::Error),
+    #[error("Can't execute `{command}` because {source}")]
+    FailedExecute {
+        command: String,
+        #[source]
+        source: std::io::Error,
+    },
 
     #[error(
         "build error\n=== Please follow the messages below to resolve dependencies, etc. ===\n\n{0}"
@@ -35,7 +39,7 @@ pub trait Command {
         &self,
         current_dir: impl AsRef<Path>,
         handle_wait: impl Fn(),
-    ) -> Result<std::process::Output, std::io::Error> {
+    ) -> Result<std::process::Output, Error> {
         let command = self.command();
         let args = self.args();
         let current_dir = current_dir.as_ref().to_path_buf();
@@ -51,7 +55,10 @@ pub trait Command {
         });
         loop {
             if let Ok(output) = rx.try_recv() {
-                break output;
+                break output.map_err(|source| Error::FailedExecute {
+                    command: self.command_line(),
+                    source,
+                });
             }
             handle_wait();
             thread::sleep(Duration::from_millis(50));
@@ -82,10 +89,10 @@ impl Command for Configure<'_> {
         "./configure"
     }
     fn args(&self) -> Vec<String> {
-        self.opts
+        [format!("--prefix={}", self.prefix.display()).as_str()]
             .iter()
+            .chain(self.opts.iter())
             .map(|&s| s.to_owned())
-            .chain([format!("--prefix={}", self.prefix.display())])
             .collect_vec()
     }
     fn order(&self) -> usize {
