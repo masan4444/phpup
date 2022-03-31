@@ -12,7 +12,6 @@ use flate2::read::GzDecoder;
 use indicatif::{ProgressBar, ProgressStyle};
 use once_cell::sync::Lazy;
 use progress_reader::ProgressReader;
-use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::{BufReader, BufWriter, Read};
 use std::path::{Path, PathBuf};
@@ -57,8 +56,8 @@ pub enum Error {
     #[error(transparent)]
     FailedDownload(#[from] curl::Error),
 
-    #[error("Invalid checksum\nexptected: {expected}\ngot: {got}")]
-    InvalidChecksum { expected: String, got: String },
+    #[error(transparent)]
+    InvalidChecksum(#[from] release::ChecksumError),
 
     #[error(transparent)]
     FailedMake(#[from] make::Error),
@@ -171,37 +170,16 @@ fn download(url: &str, dir: impl AsRef<Path>) -> Result<PathBuf, Error> {
 
 fn verify(filepath: impl AsRef<Path>, checksum: Option<&Hash>) -> Result<(), Error> {
     if let Some(checksum) = checksum {
+        let hash_type = checksum.hash_type();
         let file = fs::File::open(filepath)?;
         let progress_bar = ProgressBar::new(file.metadata()?.len())
             .with_style(PROGRESS_STYLE.clone())
-            .with_prefix("Verifying");
-        let mut file_reader = ProgressReader::new(file, &progress_bar);
+            .with_prefix("Verifying")
+            .with_message(hash_type);
 
-        let (checksum, hash, hash_type) = match checksum {
-            Hash::SHA256(checksum) => {
-                progress_bar.set_message("SHA-256 checksum");
-                let mut sha256 = Sha256::new();
-                std::io::copy(&mut file_reader, &mut sha256)?;
-                let hash = sha256.finalize();
-                (checksum, format!("{:x}", hash), "SHA-256")
-            }
-            Hash::MD5(checksum) => {
-                progress_bar.set_message("MD5 checksum");
-                let mut md5 = md5::Context::new();
-                std::io::copy(&mut file_reader, &mut md5)?;
-                let hash = md5.compute();
-                (checksum, format!("{:x}", hash), "MD5")
-            }
-        };
-        if checksum == &hash {
-            progress_bar.finish_and_clear();
-            println!("{:>12} {} checksum", "Verified".green().bold(), hash_type);
-        } else {
-            return Err(Error::InvalidChecksum {
-                expected: checksum.clone(),
-                got: hash,
-            });
-        }
+        checksum.verify(ProgressReader::new(file, &progress_bar))?;
+        progress_bar.finish_and_clear();
+        println!("{:>12} {} checksum", "Verified".green().bold(), hash_type);
     } else {
         println!(
             "{:>12} {}: No checksum",
