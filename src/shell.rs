@@ -8,7 +8,7 @@ pub enum Shell {
     Bash,
     Zsh,
     Fish,
-    PowerShell
+    PowerShell,
 }
 
 pub const fn available_shells() -> &'static [&'static str] {
@@ -34,7 +34,6 @@ impl Shell {
             }
             Fish => format!("set -gx {} {};", name, value),
             PowerShell => unimplemented!(),
-
         }
     }
     pub fn auto_switch_hook(&self, version_file: &version::File) -> String {
@@ -87,7 +86,7 @@ impl Shell {
                     _phpup_autoload_hook"#,
                     phpup_use = phpup_use
                 )
-            },
+            }
             PowerShell => {
                 unimplemented!()
             }
@@ -97,7 +96,7 @@ impl Shell {
         match &self {
             Bash | Fish => None,
             Zsh => Some("rehash".to_string()),
-            PowerShell => unimplemented!()
+            PowerShell => unimplemented!(),
         }
     }
     pub fn to_clap_shell(&self) -> clap_complete::Shell {
@@ -105,11 +104,11 @@ impl Shell {
             Bash => clap_complete::Shell::Bash,
             Zsh => clap_complete::Shell::Zsh,
             Fish => clap_complete::Shell::Fish,
-            PowerShell => clap_complete::Shell::PowerShell
+            PowerShell => clap_complete::Shell::PowerShell,
         }
     }
 }
 
 mod detect;
-pub use detect::ShellDetectError;
 pub use detect::detect;
+pub use detect::ShellDetectError;

@@ -20,8 +20,7 @@ pub fn detect() -> Result<super::super::Shell, super::ShellDetectError> {
                 .file_stem()
                 .and_then(OsStr::to_str)
                 .map(str::to_lowercase);
-            if let Some(shell) = process_name.as_deref().and_then(|x| x.parse().ok())
-            {
+            if let Some(shell) = process_name.as_deref().and_then(|x| x.parse().ok()) {
                 return Ok(shell);
             }
         } else {
