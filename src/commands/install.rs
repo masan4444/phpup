@@ -215,7 +215,7 @@ fn unpack(tar_gz: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> Result<PathBuf
     Ok(dst_dir.as_ref().join(unpaked_dirname))
 }
 
-#[cfg(unix)]
+// #[cfg(unix)]
 fn build<'a>(
     src_dir: impl AsRef<Path>,
     dst_dir: impl AsRef<Path>,

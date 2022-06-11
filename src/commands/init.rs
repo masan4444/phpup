@@ -33,7 +33,7 @@ impl Command for Init {
     type Error = Error;
 
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let shell = self.shell.map_or_else(Shell::detect_shell, Ok)?;
+        let shell = self.shell.map_or_else(shell::detect, Ok)?;
         let symlink = create_symlink();
         if let Some(default_path) = default_path(config) {
             symlink::link(&default_path, &symlink).expect("Can't create symlink!");
