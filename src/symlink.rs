@@ -13,3 +13,16 @@ pub fn remove<P: AsRef<Path>>(symlink_file: P) -> std::io::Result<()> {
     }
     Ok(())
 }
+
+#[cfg(windows)]
+pub fn link<P: AsRef<Path>, U: AsRef<Path>>(from: P, to: U) -> std::io::Result<()> {
+    junction::create(from, to)
+}
+
+#[cfg(windows)]
+pub fn remove<P: AsRef<Path>>(junction: P) -> std::io::Result<()> {
+    if junction::exists(&junction).is_ok() {
+        std::fs::remove_dir(junction)?;
+    }
+    Ok(())
+}

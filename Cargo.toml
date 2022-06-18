@@ -36,5 +36,9 @@ indicatif = "0.16.2"
 md5 = "0.7.0"
 sha2 = "0.10.2"
 
+[target.'cfg(windows)'.dependencies]
+junction = "0.2.0"
+sysinfo = "0.23.12"
+
 [profile.release]
 strip = "symbols"

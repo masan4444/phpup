@@ -21,10 +21,7 @@ impl Command for Completions {
     type Error = Error;
 
     fn run(&self, _: &Config) -> Result<(), Error> {
-        let shell = self
-            .shell
-            .map_or_else(Shell::detect_shell, Ok)?
-            .to_clap_shell();
+        let shell = self.shell.map_or_else(shell::detect, Ok)?.to_clap_shell();
         let app = Cli::into_app();
         let mut stdout = std::io::stdout();
         shell.generate(&app, &mut stdout);
