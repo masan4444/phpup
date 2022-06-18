@@ -29,7 +29,7 @@ impl Command for ListRemote {
     type Error = Error;
 
     fn run(&self, config: &Config) -> Result<(), Error> {
-        let query_versions = match &self.version {
+        let releases = match &self.version {
             Some(version) => {
                 if self.only_latest_patch && version.patch_version().is_some() {
                     println!(
@@ -38,38 +38,26 @@ impl Command for ListRemote {
                         version
                     );
                 }
-                vec![*version]
+                release::fetch(*version)?
             }
-            None => {
-                vec![
-                    Version::from_major(3),
-                    Version::from_major(4),
-                    Version::from_major(5),
-                    Version::from_major(7),
-                    Version::from_major(8),
-                ]
-            }
+            None => release::fetch_all()?,
         };
 
         let installed_versions = version::installed(config).collect_vec();
         let current_version = Local::current(config);
 
-        for query_version in query_versions {
-            let releases = release::fetch_all(query_version)?;
-            let remote_versions = releases.keys();
+        let remote_versions = releases.keys();
+        let remote_versions = if self.only_latest_patch {
+            filter_latest_patch(remote_versions).collect_vec()
+        } else {
+            remote_versions.collect_vec()
+        };
 
-            let remote_versions = if self.only_latest_patch {
-                filter_latest_patch(remote_versions).collect_vec()
-            } else {
-                remote_versions.collect_vec()
-            };
-
-            for &remote_version in remote_versions {
-                let installed = installed_versions.contains(&remote_version);
-                let remote_version = Local::Installed(remote_version);
-                let used = Some(&remote_version) == current_version.as_ref();
-                println!("{}", remote_version.to_string_by(installed, used))
-            }
+        for &remote_version in remote_versions {
+            let installed = installed_versions.contains(&remote_version);
+            let remote_version = Local::Installed(remote_version);
+            let used = Some(&remote_version) == current_version.as_ref();
+            println!("{}", remote_version.to_string_by(installed, used))
         }
         Ok(())
     }

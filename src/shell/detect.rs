@@ -6,7 +6,7 @@ use thiserror::Error;
 
 #[cfg(unix)]
 pub use self::unix::detect;
-#[cfg(not(unix))]
+#[cfg(windows)]
 pub use self::windows::detect;
 
 const MAX_SEARCH_ITERATIONS: u8 = 10;

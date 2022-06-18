@@ -1,4 +1,4 @@
-#![cfg(not(unix))]
+#![cfg(windows)]
 
 use std::ffi::OsStr;
 use sysinfo::{ProcessExt, System, SystemExt};
