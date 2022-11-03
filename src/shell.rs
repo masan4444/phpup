@@ -3,17 +3,15 @@ use indoc::formatdoc;
 use std::fmt::Display;
 use std::path::Path;
 use std::str::FromStr;
+use strum::EnumVariantNames;
 use thiserror::Error;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, EnumVariantNames)]
+#[strum(serialize_all = "lowercase")]
 pub enum Shell {
     Bash,
     Zsh,
     Fish,
-}
-
-pub const fn available_shells() -> &'static [&'static str] {
-    &["bash", "zsh", "fish"]
 }
 
 #[derive(Debug, Error)]
@@ -158,6 +156,16 @@ impl FromStr for Shell {
             _ => Err(ParseShellError::UnknownShell(s.to_owned())),
         }
     }
+}
+
+// Based on https://github.com/clap-rs/clap/discussions/4264
+#[macro_export]
+macro_rules! clap_enum_variants {
+    ($e: ty) => {{
+        use clap::builder::TypedValueParser;
+        use strum::VariantNames;
+        clap::builder::PossibleValuesParser::new(<$e>::VARIANTS).map(|s| s.parse::<$e>().unwrap())
+    }};
 }
 
 struct ProcessInfo {

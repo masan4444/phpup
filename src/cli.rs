@@ -2,7 +2,7 @@ use crate::commands::{self, Command};
 use crate::config::Config;
 
 #[derive(clap::Parser, Debug)]
-#[clap(
+#[command(
     name = env!("CARGO_PKG_NAME"),
     version = env!("CARGO_PKG_VERSION"),
     bin_name = "phpup",
@@ -18,47 +18,47 @@ pub struct Cli {
 #[derive(clap::Parser, Debug)]
 pub enum SubCommand {
     /// Initialize and Print shell script required for PHP-UP
-    #[clap(bin_name = "init")]
+    #[command(bin_name = "init")]
     Init(commands::Init),
 
     /// List remote PHP versions
-    #[clap(bin_name = "list-remote", visible_aliases = &["ls-remote"])]
+    #[command(bin_name = "list-remote", visible_aliases = &["ls-remote"])]
     ListRemote(commands::ListRemote),
 
     /// Install a new PHP version
-    #[clap(bin_name = "install")]
+    #[command(bin_name = "install")]
     Install(commands::Install),
 
     /// List local PHP versions
-    #[clap(bin_name = "list", visible_aliases = &["ls"])]
+    #[command(bin_name = "list", visible_aliases = &["ls"])]
     List(commands::ListLocal),
 
     /// Switch PHP version
-    #[clap(bin_name = "use")]
+    #[command(bin_name = "use")]
     Use(commands::Use),
 
     /// Print the current PHP version
-    #[clap(bin_name = "current")]
+    #[command(bin_name = "current")]
     Current(commands::Current),
 
     /// Uninstall a PHP version
-    #[clap(bin_name = "uninstall")]
+    #[command(bin_name = "uninstall")]
     Uninstall(commands::Uninstall),
 
     /// Alias a version to a common name
-    #[clap(bin_name = "alias")]
+    #[command(bin_name = "alias")]
     Alias(commands::Alias),
 
     /// Remove an alias definition
-    #[clap(bin_name = "unalias")]
+    #[command(bin_name = "unalias")]
     Unalias(commands::Unalias),
 
     /// Set a version as the default version
-    #[clap(bin_name = "default")]
+    #[command(bin_name = "default")]
     Default(commands::Default),
 
     /// Print shell completions
-    #[clap(bin_name = "completions")]
+    #[command(bin_name = "completions")]
     Completions(commands::Completions),
 }
 
