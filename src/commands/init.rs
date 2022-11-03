@@ -1,10 +1,8 @@
 use super::{Command, Config};
+use crate::clap_enum_variants;
 use crate::shell::{self, Shell};
 use crate::symlink;
-use crate::version;
-use crate::version::system;
-use crate::version::Alias;
-use crate::version::Local;
+use crate::version::{self, system, Alias, Local};
 use clap;
 use std::path::PathBuf;
 use thiserror::Error;
@@ -12,7 +10,7 @@ use thiserror::Error;
 #[derive(clap::Parser, Debug)]
 pub struct Init {
     /// Spacify a shell type
-    #[clap(long, possible_values(shell::available_shells()))]
+    #[clap(long, value_parser = clap_enum_variants!(Shell))]
     shell: Option<Shell>,
 
     /// Enable automatically version switching when changing directory

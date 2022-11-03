@@ -13,8 +13,8 @@ categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 thiserror = "1.0.30"
-clap = { version = "3.0.5", features = ["derive", "env"] }
-clap_complete = "3.0.6"
+clap = { version = "4.0.18", features = ["derive", "env"] }
+clap_complete = "4.0.3"
 itertools = "0.10.3"
 once_cell = "1.9.0"
 derive_more = "0.99.16"
@@ -35,6 +35,7 @@ indoc = "1.0.3"
 indicatif = "0.16.2"
 md5 = "0.7.0"
 sha2 = "0.10.2"
+strum = { version = "0.24.1", features = ["derive"] }
 
 [profile.release]
 strip = "symbols"

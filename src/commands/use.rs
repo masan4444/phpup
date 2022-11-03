@@ -27,7 +27,7 @@ pub struct Use {
     quiet: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum RequestVersion {
     Installed(Version),
     Alias(Alias),

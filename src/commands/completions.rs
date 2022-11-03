@@ -1,13 +1,14 @@
 use super::{Command, Config};
+use crate::clap_enum_variants;
 use crate::cli::Cli;
 use crate::shell::{self, Shell};
-use clap::{self, IntoApp};
-use clap_complete::Generator;
+use clap::{self, CommandFactory};
+use clap_complete::generate;
 use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
 pub struct Completions {
-    #[clap(long, possible_values(shell::available_shells()))]
+    #[clap(long, value_parser = clap_enum_variants!(Shell))]
     shell: Option<Shell>,
 }
 
@@ -25,9 +26,10 @@ impl Command for Completions {
             .shell
             .map_or_else(Shell::detect_shell, Ok)?
             .to_clap_shell();
-        let app = Cli::into_app();
+        let mut app = Cli::command();
+        let bin_name = app.get_name().to_string();
         let mut stdout = std::io::stdout();
-        shell.generate(&app, &mut stdout);
+        generate(shell, &mut app, bin_name, &mut stdout);
         Ok(())
     }
 }
