@@ -181,7 +181,7 @@ impl Hash {
     }
 }
 
-#[derive(Debug, Clone, Copy, Display, PartialEq)]
+#[derive(Debug, Clone, Copy, Display, PartialEq, Eq)]
 pub enum Support {
     #[display(fmt = "Active support")]
     ActiveSupport,

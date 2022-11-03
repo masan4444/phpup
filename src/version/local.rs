@@ -46,7 +46,7 @@ impl Local {
             .and_then(|symlink| symlink.read_link().ok())
             .and_then(|path| {
                 (system::path().as_ref() == Some(&path))
-                    .then(|| Local::System)
+                    .then_some(Local::System)
                     .or_else(|| {
                         path.parent()
                             .unwrap()
@@ -68,9 +68,9 @@ impl Local {
     pub fn to_string_by(&self, installed: bool, used: bool) -> String {
         let output = format!(
             "{:<2}{:<6} {}",
-            installed.then(|| "*").unwrap_or_default(),
+            installed.then_some("*").unwrap_or_default(),
             self,
-            used.then(|| "<-").unwrap_or_default(),
+            used.then_some("<-").unwrap_or_default(),
         );
 
         if used {
