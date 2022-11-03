@@ -35,7 +35,7 @@ pub struct Install {
 
     /// Specify configure options used by the PHP configure scripts.
     /// To specify two or more options, enclose them with quotation marks.
-    #[clap(long, env = "PHPUP_CONFIGURE_OPTS", allow_hyphen_values = true)]
+    #[arg(long, env = "PHPUP_CONFIGURE_OPTS", allow_hyphen_values = true)]
     configure_opts: Option<String>,
 }
 

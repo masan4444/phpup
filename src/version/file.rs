@@ -9,11 +9,11 @@ const DEFAULT_VERSION_FILE_NAME: &str = ".php-version";
 #[derive(clap::Parser, Debug)]
 pub struct File {
     /// Spacify a custom version file name
-    #[clap(long = "version-file-name", env = "PHPUP_VERSION_FILE_NAME", default_value = DEFAULT_VERSION_FILE_NAME)]
+    #[arg(long = "version-file-name", env = "PHPUP_VERSION_FILE_NAME", default_value = DEFAULT_VERSION_FILE_NAME)]
     filename: PathBuf,
 
     /// Enable recursive search in a parent dirctory for a version file
-    #[clap(
+    #[arg(
         long = "recursive-version-file",
         visible_alias = "recursive",
         env = "PHPUP_RECURSIVE_VERSION_FILE"

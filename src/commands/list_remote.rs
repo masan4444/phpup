@@ -11,7 +11,7 @@ use thiserror::Error;
 #[derive(clap::Parser, Debug)]
 pub struct ListRemote {
     version: Option<Version>,
-    #[clap(
+    #[arg(
         long = "latest-patch",
         visible_alias = "lp",
         help = "List latest patch release (avairable only if patch number is NOT specified)"

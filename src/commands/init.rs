@@ -10,11 +10,11 @@ use thiserror::Error;
 #[derive(clap::Parser, Debug)]
 pub struct Init {
     /// Spacify a shell type
-    #[clap(long, value_parser = clap_enum_variants!(Shell))]
+    #[arg(long, value_parser = clap_enum_variants!(Shell))]
     shell: Option<Shell>,
 
     /// Enable automatically version switching when changing directory
-    #[clap(long, visible_alias = "auto")]
+    #[arg(long, visible_alias = "auto")]
     auto_switch: bool,
 
     #[clap(flatten)]

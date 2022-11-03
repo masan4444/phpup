@@ -8,7 +8,7 @@ use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
 pub struct Completions {
-    #[clap(long, value_parser = clap_enum_variants!(Shell))]
+    #[arg(long, value_parser = clap_enum_variants!(Shell))]
     shell: Option<Shell>,
 }
 
