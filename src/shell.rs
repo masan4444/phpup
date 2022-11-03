@@ -212,7 +212,7 @@ fn get_process_info(pid: u32) -> Result<ProcessInfo, ProcessInfoError> {
     let mut line = String::new();
     BufReader::new(child.stdout.unwrap()).read_line(&mut line)?;
 
-    let mut parts = line.trim().split_whitespace();
+    let mut parts = line.split_whitespace();
     let ppid = parts
         .next()
         .ok_or_else(|| ProcessInfoError::Parse(line.to_string()))?;
