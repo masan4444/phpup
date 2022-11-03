@@ -23,6 +23,7 @@ static PROGRESS_STYLE: Lazy<ProgressStyle> = Lazy::new(|| {
         "{prefix:>12.cyan.bold} [{bar:25}] {bytes}/{total_bytes} ({eta}) {wide_msg}";
     ProgressStyle::default_bar()
         .template(progress_template)
+        .unwrap()
         .progress_chars("=> ")
 });
 
