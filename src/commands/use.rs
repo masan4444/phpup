@@ -13,8 +13,8 @@ use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
 pub struct Use {
-    #[clap(
-        name = "version | alias | system",
+    #[arg(
+        value_name = "version | alias | system",
         help = "installed version or alias name or system"
     )]
     request_version: Option<RequestVersion>,
@@ -23,11 +23,11 @@ pub struct Use {
     version_file: version::File,
 
     /// Don't output a message to stdout
-    #[clap(long)]
+    #[arg(long)]
     quiet: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum RequestVersion {
     Installed(Version),
     Alias(Alias),

@@ -6,11 +6,11 @@ use thiserror::Error;
 #[derive(clap::Parser, Debug, Default)]
 pub struct Config {
     /// Specify a custom PHP-UP directory
-    #[clap(long = "phpup-dir", env = "PHPUP_DIR")]
+    #[arg(long = "phpup-dir", env = "PHPUP_DIR")]
     base_dir: Option<PathBuf>,
 
     /// Specify a custom symbolic link used for version switching
-    #[clap(long, env = "PHPUP_MULTISHELL_PATH", hide = true)]
+    #[arg(long, env = "PHPUP_MULTISHELL_PATH", hide = true)]
     multishell_path: Option<PathBuf>,
 }
 
