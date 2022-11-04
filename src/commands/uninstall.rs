@@ -30,7 +30,7 @@ impl Command for Uninstall {
             .ok_or(Error::NotInstalled(self.version))?;
 
         if Local::current(config) == Some(Local::Installed(uninstall_version)) {
-            symlink::remove(&config.multishell_path()?).expect("Can't remove symlink!");
+            symlink::remove(config.multishell_path()?).expect("Can't remove symlink!");
         }
 
         let version_dir = config.versions_dir().join(uninstall_version.to_string());
