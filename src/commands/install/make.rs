@@ -11,6 +11,7 @@ static PROGRESS_STYLE: Lazy<ProgressStyle> = Lazy::new(|| {
     ProgressStyle::default_spinner()
         .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏ ")
         .template("{prefix:>12.bold.dim} {spinner} {wide_msg}")
+        .unwrap()
 });
 
 #[derive(Error, Debug)]

@@ -32,7 +32,7 @@ tempfile = "3.2.0"
 num_cpus = "1.13.1"
 colored = "2.0.0"
 indoc = "1.0.3"
-indicatif = "0.16.2"
+indicatif = "0.17.1"
 md5 = "0.7.0"
 sha2 = "0.10.2"
 strum = { version = "0.24.1", features = ["derive"] }
