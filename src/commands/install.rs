@@ -6,7 +6,6 @@ use crate::curl;
 use crate::decorized::Decorized;
 use crate::release::{self, Hash};
 use crate::version::{self, Version};
-use clap;
 use colored::Colorize;
 use flate2::read::GzDecoder;
 use indicatif::{ProgressBar, ProgressStyle};

@@ -4,7 +4,6 @@ use crate::symlink;
 use crate::version;
 use crate::version::Local;
 use crate::version::Version;
-use clap;
 use std::fs;
 use thiserror::Error;
 

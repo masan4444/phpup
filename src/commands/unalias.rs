@@ -1,7 +1,6 @@
 use super::{Command, Config};
 use crate::decorized::Decorized;
 use crate::version::alias;
-use clap;
 use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]

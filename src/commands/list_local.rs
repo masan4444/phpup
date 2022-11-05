@@ -3,7 +3,6 @@ use crate::decorized::Decorized;
 use crate::version;
 use crate::version::Local;
 use crate::version::Version;
-use clap;
 use itertools::Itertools;
 use thiserror::Error;
 

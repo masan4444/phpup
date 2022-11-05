@@ -3,7 +3,6 @@ use crate::clap_enum_variants;
 use crate::shell::{self, Shell};
 use crate::symlink;
 use crate::version::{self, system, Alias, Local};
-use clap;
 use std::path::PathBuf;
 use thiserror::Error;
 

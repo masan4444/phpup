@@ -1,4 +1,3 @@
-use clap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use thiserror::Error;

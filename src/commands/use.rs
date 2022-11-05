@@ -5,7 +5,6 @@ use crate::version;
 use crate::version::Alias;
 use crate::version::Local;
 use crate::version::Version;
-use clap;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;

@@ -3,7 +3,6 @@ use crate::release;
 use crate::version;
 use crate::version::Local;
 use crate::version::Version;
-use clap;
 use colored::Colorize;
 use itertools::Itertools;
 use thiserror::Error;

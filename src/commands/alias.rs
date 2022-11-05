@@ -2,7 +2,6 @@ use super::{Command, Config};
 use crate::decorized::Decorized;
 use crate::version;
 use crate::version::Local;
-use clap;
 use colored::Colorize;
 use thiserror::Error;
 
