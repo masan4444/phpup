@@ -4,7 +4,7 @@ mod progress_reader;
 use super::{Command, Config};
 use crate::curl;
 use crate::decorized::Decorized;
-use crate::release::{self, Hash};
+use crate::releases::{self, hash::Hash, Installable};
 use crate::version::{self, Version};
 use colored::Colorize;
 use flate2::read::GzDecoder;
@@ -51,13 +51,13 @@ pub enum Error {
     UnsupportedPHP3,
 
     #[error(transparent)]
-    FailedFetchRelease(#[from] release::FetchError),
+    FailedFetchRelease(#[from] releases::FetchError),
 
     #[error(transparent)]
     FailedDownload(#[from] curl::Error),
 
     #[error(transparent)]
-    InvalidChecksum(#[from] release::ChecksumError),
+    InvalidChecksum(#[from] releases::ChecksumError),
 
     #[error(transparent)]
     FailedMake(#[from] make::Error),
@@ -78,8 +78,8 @@ impl Command for Install {
             return Err(Error::UnsupportedPHP3);
         }
 
-        let release = release::fetch_latest(request_version)?;
-        let install_version = release.version.unwrap();
+        let installable = Installable::fetch(request_version)?;
+        let install_version = installable.version();
 
         if version::latest_installed_by(&request_version, config) == Some(install_version) {
             println!(
@@ -100,7 +100,7 @@ impl Command for Install {
             .prefix(".downloads-")
             .tempdir_in(&config.base_dir())?;
 
-        let (url, checksum) = release.source_url();
+        let (url, checksum) = installable.source_url();
 
         let tar_gz = download(&url, &download_dir)?;
         verify(&tar_gz, checksum)?;
@@ -140,7 +140,8 @@ impl Install {
 
 fn download(url: &str, dir: impl AsRef<Path>) -> Result<PathBuf, Error> {
     let curl::Header { content_length } = curl::get_header(url)?;
-    let progress_bar = ProgressBar::new(content_length.unwrap() as u64)
+    // Sometimes we don't get a content length header
+    let progress_bar = ProgressBar::new(content_length.unwrap_or(0) as u64)
         .with_style(PROGRESS_STYLE.clone())
         .with_prefix("Downloading")
         .with_message(url.to_owned());

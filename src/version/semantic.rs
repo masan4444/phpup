@@ -62,12 +62,20 @@ pub enum PreType {
 }
 
 impl Version {
-    pub fn from_numbers(major: usize, minor: Option<usize>, patch: Option<usize>) -> Self {
+    pub fn from_numbers(
+        major: usize,
+        minor: Option<usize>,
+        patch: Option<usize>,
+        pre: Option<(PreType, usize)>,
+    ) -> Self {
         Self {
             version: major,
             minor: minor.map(|version| Minor {
                 version,
-                patch: patch.map(|version| Patch { version, pre: None }),
+                patch: patch.map(|version| Patch {
+                    version,
+                    pre: pre.map(|(pre_type, version)| Pre { version, pre_type }),
+                }),
             }),
         }
     }
@@ -141,6 +149,7 @@ impl FromStr for Version {
                 3,
                 Some(0),
                 Some(if cfg!(target_os = "windows") { 17 } else { 18 }),
+                None,
             ));
         }
         let cap = VERSION_REGEX
@@ -231,7 +240,17 @@ mod tests {
         assert!(matches!(version3_1_4, Ok(_)));
         assert_eq!(
             version3_1_4.unwrap(),
-            Version::from_numbers(3, Some(1), Some(4))
+            Version::from_numbers(3, Some(1), Some(4), None)
+        );
+    }
+
+    #[test]
+    fn parsed_from_str_pre_release() {
+        let version: Result<Version, _> = "8.5.0RC1".parse();
+        assert!(matches!(version, Ok(_)));
+        assert_eq!(
+            version.unwrap(),
+            Version::from_numbers(8, Some(5), Some(0), Some((PreType::Rc, 1)))
         );
     }
 
@@ -244,7 +263,7 @@ mod tests {
         println!("{:?}", parsed);
         assert!(parsed.is_ok());
 
-        let version3_1_4 = Version::from_numbers(3, Some(1), Some(4));
+        let version3_1_4 = Version::from_numbers(3, Some(1), Some(4), None);
         assert_eq!(
             parsed.unwrap().get(&version3_1_4),
             Some(&vec!["abc", "cdf"])
@@ -253,9 +272,9 @@ mod tests {
 
     #[test]
     fn includes_test() {
-        let version3_1_4 = Version::from_numbers(3, Some(1), Some(4));
-        let version3_1 = Version::from_numbers(3, Some(1), None);
-        let version3 = Version::from_numbers(3, None, None);
+        let version3_1_4 = Version::from_numbers(3, Some(1), Some(4), None);
+        let version3_1 = Version::from_numbers(3, Some(1), None, None);
+        let version3 = Version::from_numbers(3, None, None, None);
 
         assert!(version3.includes(&version3));
         assert!(version3.includes(&version3_1));

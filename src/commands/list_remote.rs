@@ -1,10 +1,11 @@
 use super::{Command, Config};
-use crate::release;
+use crate::releases;
 use crate::version;
 use crate::version::Local;
 use crate::version::Version;
 use colored::Colorize;
 use itertools::Itertools;
+use std::collections::BTreeSet;
 use thiserror::Error;
 
 #[derive(clap::Parser, Debug)]
@@ -21,7 +22,7 @@ pub struct ListRemote {
 #[derive(Error, Debug)]
 pub enum Error {
     #[error(transparent)]
-    FailedFetchRelease(#[from] release::FetchError),
+    FailedFetchRelease(#[from] releases::FetchError),
 }
 
 impl Command for ListRemote {
@@ -52,18 +53,35 @@ impl Command for ListRemote {
 
         let installed_versions = version::installed(config).collect_vec();
         let current_version = Local::current(config);
+        let pre_releases = releases::pre_release::fetch_all()?;
 
         for query_version in query_versions {
-            let releases = release::fetch_all(query_version)?;
-            let remote_versions = releases.keys();
-
-            let remote_versions = if self.only_latest_patch {
-                filter_latest_patch(remote_versions).collect_vec()
+            let remote_versions = if query_version.pre_type().is_some() {
+                match pre_releases.get(&query_version) {
+                    Some(v) => Ok(vec![v.version]),
+                    None => Err(releases::FetchError::NotFoundRelease(query_version)),
+                }
             } else {
-                remote_versions.collect_vec()
-            };
+                let releases = releases::release::fetch_all(query_version);
+                let pre_release_keys = pre_releases
+                    .get_versions_included_by(&query_version)
+                    .sorted();
+                match releases {
+                    Ok(r) => {
+                        let mut keys: BTreeSet<Version> = r.keys().copied().collect();
+                        keys.extend(pre_release_keys);
+                        if self.only_latest_patch {
+                            Ok(filter_latest_patch(keys.iter()).copied().collect_vec())
+                        } else {
+                            Ok(keys.iter().copied().collect_vec())
+                        }
+                    }
+                    Err(_) if pre_release_keys.len() > 0 => Ok(pre_release_keys.copied().collect()),
+                    Err(e) => Err(e),
+                }
+            }?;
 
-            for &remote_version in remote_versions {
+            for remote_version in remote_versions {
                 let installed = installed_versions.contains(&remote_version);
                 let remote_version = Local::Installed(remote_version);
                 let used = Some(&remote_version) == current_version.as_ref();

@@ -1,3 +1,4 @@
+use super::{hash::Hash, FetchError};
 use crate::curl;
 use crate::version::Version;
 use chrono::{Datelike, NaiveDate, Utc};
@@ -5,19 +6,6 @@ use derive_more::Display;
 use serde::{de, Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::BTreeMap;
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum FetchError {
-    #[error("Can't find releases that matches {0}")]
-    NotFoundRelease(Version),
-
-    #[error(transparent)]
-    CurlError(#[from] curl::Error),
-
-    #[error("Receive error message from release site: {0}")]
-    Other(String),
-}
 
 fn fetch_and_parse(
     version: Option<Version>,
@@ -60,8 +48,12 @@ pub fn fetch_latest(version: Version) -> Result<Release, FetchError> {
 }
 
 pub fn fetch_oldest_patch(version: Version) -> Result<Release, FetchError> {
-    let oldest_minor_version =
-        Version::from_numbers(version.major_version(), version.minor_version(), Some(0));
+    let oldest_minor_version = Version::from_numbers(
+        version.major_version(),
+        version.minor_version(),
+        Some(0),
+        None,
+    );
     fetch_latest(oldest_minor_version)
 }
 
@@ -130,55 +122,6 @@ pub struct File {
     checksum: Option<Hash>,
     // TODO: Option<NaiveTime>
     date: Option<String>,
-}
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all(deserialize = "lowercase", serialize = "lowercase"))]
-pub enum Hash {
-    SHA256(String),
-    MD5(String),
-}
-
-#[derive(Error, Debug)]
-pub enum ChecksumError {
-    #[error("Invalid checksum\nexptected: {expected}\ngot: {got}")]
-    InvalidChecksum { expected: String, got: String },
-
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-}
-
-use sha2::Digest;
-impl Hash {
-    pub fn hash_type(&self) -> &'static str {
-        match self {
-            Hash::SHA256(_) => "SHA-256",
-            Hash::MD5(_) => "MD5",
-        }
-    }
-    pub fn verify(&self, mut data: impl std::io::Read) -> Result<(), ChecksumError> {
-        let (checksum, hash) = match self {
-            Hash::SHA256(checksum) => {
-                let mut sha256 = sha2::Sha256::new();
-                std::io::copy(&mut data, &mut sha256)?;
-                let hash = sha256.finalize();
-                (checksum, format!("{:x}", hash))
-            }
-            Hash::MD5(checksum) => {
-                let mut md5 = md5::Context::new();
-                std::io::copy(&mut data, &mut md5)?;
-                let hash = md5.compute();
-                (checksum, format!("{:x}", hash))
-            }
-        };
-        if checksum == &hash {
-            Ok(())
-        } else {
-            Err(ChecksumError::InvalidChecksum {
-                expected: checksum.clone(),
-                got: hash,
-            })
-        }
-    }
 }
 
 #[derive(Debug, Clone, Copy, Display, PartialEq, Eq)]
